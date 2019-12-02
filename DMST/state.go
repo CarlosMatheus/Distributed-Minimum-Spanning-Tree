@@ -11,7 +11,7 @@ const (
 	leader    string = "Leader"
 )
 
-// resetState will reset the State of a node when new term is discovered.
+// resetState will reset the state of a node when new term is discovered.
 func (node *Node) resetState(term int) {
 	node.currentTerm = term
 	node.votedFor = 0
