@@ -111,15 +111,19 @@ func (node *Node) loop() {
 }
 
 func (node *Node) writeLog(){
-	fmt.Print("START LOG GO ROUTINE")
+	fmt.Print("START LOG GO ROUTINE ")
 
-	f, err := os.Create("log/" + strconv.Itoa(node.me) + ".txt")
+	f, err := os.Create("logs\\" + strconv.Itoa(node.me) + ".txt")
 	if err != nil {
 		fmt.Println(err)
 		return
 	}
 
 	defer f.Close()
+
+	node.logNode()
+	node.logEdges()
+	node.logChan <- "Cheguei"
 
 	for{
 		logEntry := <- node.logChan
@@ -432,8 +436,6 @@ func (node *Node) responseToChangeCore(msg *MessageArgs) {
 }
 
 func (node *Node) halt() {
-	// todo, stop function
-
 	node.logNode()
 	node.logEdges()
 }
