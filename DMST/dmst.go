@@ -1,24 +1,31 @@
 package DMST
 
 import (
+	_ "Distributed-Minimum-Spanning-Tree/util"
 	"errors"
-	"Distributed-Minimum-Spanning-Tree/util"
 	"log"
 	"sync"
 	"time"
 )
 
-var nodeStatusList = map[int]string{
-	1: "Sleeping",
-	2: "Find",
-	3: "Found",
-}
+const SLEEPING_STATE = "Sleeping"
+const FIND_STATE = "Find"
+const FOUND_STATE = "Found"
+const REJECTED_STATE = "Rejected"
+const BRANCH_STATE = "Branch"
+const BASIC_STATE = "Basic"
 
-var edgeStatusList = map[int]string{
-	1: "Rejected",
-	2: "Branch",
-	3: "Basic",
-}
+//var nodeStatusList = map[string]int{
+//	"Sleeping": 1,
+//	"Find": 2,
+//	"Found": 3,
+//}
+//
+//var edgeStatusList = map[int]string{
+//	1: "Rejected",
+//	2: "Branch",
+//	3: "Basic",
+//}
 
 // Node is the struct that hold all information that is used by this instance
 // of node.
@@ -37,7 +44,7 @@ type Node struct {
 
 	// GHS variables
 	nodeLevel int
-	nodeStatus int
+	nodeStatus string
 	nodeFragement int
 	findCount int
 	inBranch int
@@ -86,6 +93,18 @@ func NewNode(peers map[int]string, me int) *Node {
 func (node *Node) Done() <-chan struct{} {
 	return node.done
 }
+
+func awakeningResponse(node *Node) {
+	// Is a reponse to a awake call, this can only occur to sleeping node
+	if (node.nodeStatus == SLEEPING_STATE) {
+		// ok
+	} else {
+		// problem
+	}
+}
+
+
+
 
 // All changes to Node structure should occur in the context of this routine.
 // This way it's not necessary to use synchronizers to protect shared data.
