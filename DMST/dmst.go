@@ -115,8 +115,8 @@ func (node *Node) loop() {
 			args := &MessageArgs{
 				Type: InitiateType,
 				NodeLevel: 1,
-				NodeStatus: 2,
-				NodeFragement: 3,
+				NodeStatus: SleepingState,
+				NodeFragment: 3,
 				EdgeWeight: 4,
 			} 
 			// go func(peer int) {
@@ -174,8 +174,8 @@ func (node *Node) awakeningResponse() {
 	}
 }
 
-func (node *Node) getMinEdge() Edge {
-	var minEdge Edge
+func (node *Node) getMinEdge() *Edge {
+	var minEdge *Edge
 	var minEdgeVal = (1<<31) - 1
 	for _, edge := range node.edgeList {
 		if edge.weight < minEdgeVal {
