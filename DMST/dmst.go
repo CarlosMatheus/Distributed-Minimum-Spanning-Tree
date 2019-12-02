@@ -1,15 +1,13 @@
 package DMST
 
 import (
-	"Distributed-Minimum-Spanning-Tree/util"
 	"errors"
 	"fmt"
 	"log"
 	"sync"
-	"time"
 )
 
-const infInt = (1<<31) - 1
+const Infinite = (1<<31) - 1
 
 // Node possible states
 const SleepingState = "Sleeping"
@@ -49,20 +47,12 @@ type Node struct {
 	fragment int   // FN
 	findCount int
 	inBranch int
-
+	bestEdge *Edge
 	bestEdgeWeight int
 
-	testEdge Edge
-	edgeList [] Edge // todo initialize this variable on new Nodes
-
+	testEdge *Edge
+	edgeList [] *Edge // todo initialize this variable on new Nodes
 	edgeMap map[int]*Edge // todo initialize this variable on new Nodes
-
-	currentState *util.ProtectedString
-	currentTerm  int
-	votedFor     int
-
-	// Goroutine communication channels
-	electionTick    <-chan time.Time
 }
 
 type Edge struct {
@@ -117,14 +107,14 @@ func (node *Node) loop() {
 			args := &MessageArgs{
 				Type: InitiateType,
 				NodeLevel: 1,
-				NodeStatus: 2,
-				NodeFragement: 3,
+				NodeStatus: SleepingState,
+				NodeFragment: 3,
 				EdgeWeight: 4,
 			} 
-			// go func(peer int) {
+			go func(peer int) {
 				reply := &MessageReply{}
 				node.sendMessage(1, args, reply)
-			// }(1)
+			}(1)
 		}
 
 		if node.me == 1{
@@ -137,7 +127,7 @@ func (node *Node) handler() {
 	log.Println("Starting Handler")
 	for {
 		msg := <-node.msgChan
-		node.messageLog(*msg)
+		node.messageLog(msg)
 		switch msg.Type{
 			case ConnectType:
 				return
@@ -157,7 +147,7 @@ func (node *Node) handler() {
 	}
 }
 
-func (node *Node) messageLog(msg MessageArgs){
+func (node *Node) messageLog(msg *MessageArgs){
 	log.Printf("[NODE %d] %s message received from node %d", node.me, msg.Type, msg.FromID)
 }
 
@@ -178,11 +168,11 @@ func (node *Node) awakeningResponse() {
 
 func (node *Node) getMinEdge() Edge {
 	var minEdge Edge
-	var minEdgeVal = infInt
+	var minEdgeVal = Infinite
 	for _, edge := range node.edgeList {
 		if edge.weight < minEdgeVal {
 			minEdgeVal = edge.weight
-			minEdge = edge
+			minEdge = *edge
 		}
 	}
 	return minEdge
@@ -205,7 +195,7 @@ func (node *Node) wakeupProcedure() {
 	node.connect(minEdge.targetNodeID)
 }
 
-func (node *Node) placeReceivedMessageOnEndOfQueue(msg *MessageArgs) {
+func (node *Node) placeMessageEndOfQueue(msg *MessageArgs) {
 	// todo verify this
 	node.msgChan <- msg
 }
@@ -221,7 +211,7 @@ func (node *Node) responseToConnect(msg *MessageArgs) {
 		}
 	} else {
 		if node.edgeMap[msg.EdgeWeight].state == BasicState {
-			node.placeReceivedMessageOnEndOfQueue(msg)
+			node.placeMessageEndOfQueue(msg)
 		} else {
 			node.sendInitiate(msg, msg.FromID)
 		}
@@ -235,7 +225,7 @@ func (node *Node) responseToInitiate(message *MessageArgs) {
 	node.state = message.NodeStatus
 	node.inBranch = message.FromID
 
-	node.bestEdgeWeight = infInt
+	node.bestEdgeWeight = Infinite
 
 	for edgeWeight, edge := range node.edgeMap {
 		if edge.state == BranchState && edge.weight != message.FromID{
@@ -254,20 +244,20 @@ func (node *Node) procedureTest() {
 	
 }
 
-func (node *Node) onTest(level int, fragment int, edge Edge) {
+func (node *Node) responseToTest(msg *MessageArgs) {
 	if node.state == SleepingState {
 		node.wakeupProcedure()
 	}
-	if level > node.level {
-		// place msg to the queue
+	if msg.NodeLevel > node.level {
+		node.placeMessageEndOfQueue(msg)
 	} else {
-		if fragment != node.fragment {
-			node.onAccept(edge)
+		if msg.NodeFragment != node.fragment {
+			node.responseToAccept(msg.EdgeWeight)
 		} else {
-			if edge.state == BasicState {
-				edge.state = RejectedState
-				if node.testEdge.weight != edge.weight {
-					node.onReject(edge)
+			if node.edgeMap[msg.EdgeWeight].state == BasicState {
+				node.edgeMap[msg.EdgeWeight].state = RejectedState
+				if node.testEdge.weight != msg.EdgeWeight {
+					node.responseToReject(msg.EdgeWeight)
 				} else {
 					// execute test
 				}
@@ -276,18 +266,55 @@ func (node *Node) onTest(level int, fragment int, edge Edge) {
 	}
 }
 
-func (node *Node) onAccept(edge Edge){
-	//node.testEdge = nil
-	if edge.weight < node.bestEdge.weight {
-		node.bestEdge = edge
+func (node *Node) responseToAccept(weight int){
+	node.testEdge = nil
+	if weight < node.bestEdgeWeight{
+		node.bestEdgeWeight = weight
 	}
-	// execute report
+	// execute procedure report
 }
 
-func (node *Node) onReject(edge Edge){
-	if edge.state == BasicState {
-		edge.state = RejectedState
+func (node *Node) responseToReject(weight int){
+	if node.edgeMap[weight].state == BasicState {
+		node.edgeMap[weight].state = RejectedState
 	}
-	// execute test
+	// execute procedure test
 }
 
+func (node *Node) reportProcedure() {
+	if node.findCount == 0 && node.testEdge == nil {
+		node.state = FoundState
+		args := &MessageArgs{
+			FromID: node.me,
+			Type: ReportType,
+			BestEdgeWeight: node.bestEdgeWeight
+		} 
+		go func(peer int) {
+			reply := &MessageReply{}
+			node.sendMessage(peer, args, reply)
+		}(node.inBranch)
+	}
+}
+
+func (node *Node) responseToReport(msg *MessageArgs) {
+	if msg.FromID != node.inBranch {
+		node.findCount -= node.findCount - 1
+		if weight < node.bestEdgeWeight {
+			node.bestEdgeWeight = weight
+		}
+		node.reportProcedure()
+	}
+	else if node.state == FindState {
+		node.placeMessageEndOfQueue(msg)
+	}
+	else if weight > node.bestEdgeWeight {
+		node.changeCoreProcedure()
+	}
+	else if weight == node.bestEdgeWeight == Infinite {
+		node.halt()
+	}
+}
+
+func (node *Node) halt() {
+	// todo, stop function
+}
