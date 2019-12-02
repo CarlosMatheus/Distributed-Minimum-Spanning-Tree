@@ -106,23 +106,7 @@ func (node *Node) loop() {
 	go node.writeLog()
 
 	for {
-		if node.me == 2{
-			args := &MessageArgs{
-				Type: InitiateType,
-				NodeLevel: 1,
-				NodeState: SleepingState,
-				NodeFragment: 3,
-				EdgeWeight: 4,
-			} 
-			go func(peer int) {
-				reply := &MessageReply{}
-				node.sendMessage(1, args, reply)
-			}(1)
-		}
-
-		if node.me == 1{
 			node.handler()
-		}
 	}
 }
 
@@ -155,18 +139,31 @@ func (node *Node) handler() {
 		node.messageLog(msg)
 		switch msg.Type{
 			case ConnectType:
+				node.responseToConnect(msg)
 				return
+
 			case InitiateType:
+				node.responseToInitiate(msg)
 				return
+
 			case TestType:
+				node.responseToTest(msg)
 				return
+
 			case AcceptType:
+				node.responseToAccept(msg)
 				return
+
 			case RejectType:
+				node.responseToReject(msg)
 				return
+
 			case ReportType:
+				node.responseToReport(msg)
 				return
+
 			case ChangeCoreType:
+				node.responseToChangeCore(msg)
 				return
 		}
 	}
@@ -204,7 +201,15 @@ func (node *Node) getMinEdge() *Edge {
 }
 
 func (node *Node) connect(targetNodeID int) {
-	// todo create connect function
+	args := &MessageArgs{
+		FromID: node.me,
+		Type: ConnectType,
+		NodeLevel: node.level,
+	} 
+	go func(peer int) {
+		reply := &MessageReply{}
+		node.sendMessage(peer, args, reply)
+	}(targetNodeID)
 }
 
 func (node *Node) sendInitiate(level int, fragment int, state string, edgeWeight int) {
@@ -221,8 +226,17 @@ func (node *Node) sendInitiate(level int, fragment int, state string, edgeWeight
 	}(node.edgeMap[edgeWeight].targetNodeID)
 }
 
-func (node *Node) sendTest(message *MessageArgs, edgeID int) {
-	// todo create send send test
+func (node *Node) sendTest(level int, fragment int, targetNodeID int) {
+	args := &MessageArgs{
+		FromID: node.me,
+		Type: TestType,
+		NodeLevel: level,
+		NodeFragment: fragment,
+	} 
+	go func(peer int) {
+		reply := &MessageReply{}
+		node.sendMessage(peer, args, reply)
+	}(targetNodeID)
 }
 
 func (node *Node) wakeupProcedure() {
@@ -265,7 +279,7 @@ func (node *Node) responseToInitiate(msg *MessageArgs) {
 	node.inBranch = msg.FromID
 	node.bestEdgeWeight = Infinite
 
-	for edgeWeight, edge := range node.edgeMap {
+	for _, edge := range node.edgeMap {
 		if edge.state == BranchState && edge.weight != msg.FromID{
 			node.sendInitiate(node.level, node.fragment, node.state, node.edgeMap[msg.EdgeWeight].targetNodeID)
 			if msg.NodeState == FindState {
@@ -274,11 +288,11 @@ func (node *Node) responseToInitiate(msg *MessageArgs) {
 		}
 	}
 	if msg.NodeState == FindState {
-		node.procedureTest()
+		node.testProcedure()
 	}
 }
 
-func (node *Node) procedureTest(msg *MessageArgs) {
+func (node *Node) testProcedure() {
 	minWeightedEdge := Infinite
 	for _, edge := range node.edgeMap {
 		if edge.state == BasicState {
@@ -289,11 +303,34 @@ func (node *Node) procedureTest(msg *MessageArgs) {
 	}
 	if minWeightedEdge != Infinite {
 		node.testEdge = node.edgeMap[minWeightedEdge]
-		node.sendTest(msg, minWeightedEdge)
+		node.sendTest(node.level, node.fragment, node.testEdge.targetNodeID)
 	} else {
 		node.testEdge = nil
 		node.reportProcedure()
 	}
+}
+
+func (node *Node) sendAccept(EdgeWeight int) {
+	args := &MessageArgs{
+		FromID: node.me,
+		Type: AcceptType,
+		EdgeWeight: EdgeWeight,
+	} 
+	go func(peer int) {
+		reply := &MessageReply{}
+		node.sendMessage(peer, args, reply)
+	}(node.edgeMap[EdgeWeight].targetNodeID)
+}
+
+func (node *Node) sendReject(EdgeWeight int) {
+	args := &MessageArgs{
+		FromID: node.me,
+		Type: RejectType,
+	} 
+	go func(peer int) {
+		reply := &MessageReply{}
+		node.sendMessage(peer, args, reply)
+	}(node.edgeMap[EdgeWeight].targetNodeID)
 }
 
 func (node *Node) responseToTest(msg *MessageArgs) {
@@ -304,33 +341,33 @@ func (node *Node) responseToTest(msg *MessageArgs) {
 		node.placeMessageEndOfQueue(msg)
 	} else {
 		if msg.NodeFragment != node.fragment {
-			node.responseToAccept(msg.EdgeWeight)
+			node.sendAccept(msg.EdgeWeight)
 		} else {
 			if node.edgeMap[msg.EdgeWeight].state == BasicState {
 				node.edgeMap[msg.EdgeWeight].state = RejectedState
 				if node.testEdge.weight != msg.EdgeWeight {
-					node.responseToReject(msg.EdgeWeight)
+					node.sendReject(msg.EdgeWeight)
 				} else {
-					node.procedureTest()
+					node.testProcedure()
 				}
 			}
 		}
 	}
 }
 
-func (node *Node) responseToAccept(weight int){
+func (node *Node) responseToAccept(msg *MessageArgs){
 	node.testEdge = nil
-	if weight < node.bestEdgeWeight{
-		node.bestEdgeWeight = weight
+	if msg.EdgeWeight < node.bestEdgeWeight{
+		node.bestEdgeWeight = msg.EdgeWeight
 	}
 	node.reportProcedure()
 }
 
-func (node *Node) responseToReject(weight int){
-	if node.edgeMap[weight].state == BasicState {
-		node.edgeMap[weight].state = RejectedState
+func (node *Node) responseToReject(msg *MessageArgs){
+	if node.edgeMap[msg.EdgeWeight].state == BasicState {
+		node.edgeMap[msg.EdgeWeight].state = RejectedState
 	}
-	node.procedureTest()
+	node.testProcedure()
 }
 
 func (node *Node) reportProcedure() {
@@ -375,15 +412,7 @@ func (node *Node) changeCoreProcedure() {
 			node.sendMessage(peer, args, reply)
 		}(node.edgeMap[node.bestEdgeWeight].targetNodeID)
 	} else {
-		args := &MessageArgs{
-			FromID: node.me,
-			Type: ConnectType,
-			NodeLevel: node.level,
-		} 
-		go func(peer int) {
-			reply := &MessageReply{}
-			node.sendMessage(peer, args, reply)
-		}(node.edgeMap[node.bestEdgeWeight].targetNodeID)
+		node.connect(node.edgeMap[node.bestEdgeWeight].targetNodeID)
 		node.edgeMap[node.bestEdgeWeight].state = BranchState
 	}
 }
@@ -394,8 +423,12 @@ func (node *Node) logNode() {
 
 func (node *Node) logEdges() {
 	for k, v := range node.edgeMap {
-		node.logChan <-fmt.Sprintf("TIME >> %v >> EDGE >> %d %d %d %s\n", time.Now(), node.me, k, v.weight, v.state)
+		node.logChan <- fmt.Sprintf("TIME >> %v >> EDGE >> %d %d %d %s\n", time.Now(), node.me, k, v.weight, v.state)
 	}
+}
+
+func (node *Node) responseToChangeCore(msg *MessageArgs) {
+	node.changeCoreProcedure()
 }
 
 func (node *Node) halt() {
