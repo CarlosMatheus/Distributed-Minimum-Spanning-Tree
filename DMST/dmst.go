@@ -8,6 +8,7 @@ import (
 	"sync"
 	"time"
 	"os"
+	"path"
 )
 
 const Infinite = (1<<31) - 1
@@ -78,6 +79,7 @@ func NewNode(peers map[int]string, me int) *Node {
 		done: make(chan struct{}),
 		peers: peers,
 		me:    me,
+		logChan: make(chan string, 20),
 		msgChan: make(chan *MessageArgs, 20*len(peers)),
 	}
 
@@ -111,9 +113,9 @@ func (node *Node) loop() {
 }
 
 func (node *Node) writeLog(){
-	fmt.Print("START LOG GO ROUTINE ")
+	fmt.Print("START LOG GO ROUTINE\n")
 
-	f, err := os.Create("logs\\" + strconv.Itoa(node.me) + ".txt")
+	f, err := os.Create(path.Join("logs", strconv.Itoa(node.me) + ".txt"))
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -123,7 +125,9 @@ func (node *Node) writeLog(){
 
 	node.logNode()
 	node.logEdges()
-	node.logChan <- "Cheguei"
+
+	node.logNode()
+	node.logEdges()
 
 	for{
 		logEntry := <- node.logChan
@@ -422,12 +426,12 @@ func (node *Node) changeCoreProcedure() {
 }
 
 func (node *Node) logNode() {
-	node.logChan <- fmt.Sprintf("TIME >> %v >> NODE >> %d %s\n", time.Now(), node.me, node.state)
+	node.logChan <- fmt.Sprintf("TIME >> %v >> NODE >> %d %s\n", time.Now().UnixNano() , node.me, node.state)
 }
 
 func (node *Node) logEdges() {
 	for k, v := range node.edgeMap {
-		node.logChan <- fmt.Sprintf("TIME >> %v >> EDGE >> %d %d %d %s\n", time.Now(), node.me, k, v.weight, v.state)
+		node.logChan <- fmt.Sprintf("TIME >> %v >> EDGE >> %d %d %d %s\n", time.Now().UnixNano() , node.me, k, v.weight, v.state)
 	}
 }
 
