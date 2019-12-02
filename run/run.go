@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"hash/fnv"
-	//"Distributed-Minimum-Spanning-Tree/DMST"
+	"Distributed-Minimum-Spanning-Tree/DMST"
 	// "log"
 	"math/rand"
 	"time"
@@ -42,9 +42,9 @@ func main() {
 	// 	log.Fatalf("[MAIN] Invalid instance id.\n")
 	// }
 
-	// node := node.NewNode(peers, *nodeID)
+	node := DMST.NewNode(peers, *ID)
 
-	// <-node.Done()
+	 <-node.Done()
 }
 
 func makePeers(ID int, nIDs []string) map[int]string{
