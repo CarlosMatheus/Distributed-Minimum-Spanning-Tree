@@ -259,7 +259,7 @@ func (node *Node) responseToTest(msg *MessageArgs) {
 				if node.testEdge.weight != msg.EdgeWeight {
 					node.responseToReject(msg.EdgeWeight)
 				} else {
-					// execute test
+					node.procedureTest()
 				}
 			}
 		}
@@ -271,14 +271,14 @@ func (node *Node) responseToAccept(weight int){
 	if weight < node.bestEdgeWeight{
 		node.bestEdgeWeight = weight
 	}
-	// execute procedure report
+	node.reportProcedure()
 }
 
 func (node *Node) responseToReject(weight int){
 	if node.edgeMap[weight].state == BasicState {
 		node.edgeMap[weight].state = RejectedState
 	}
-	// execute procedure test
+	node.procedureTest()
 }
 
 func (node *Node) reportProcedure() {
