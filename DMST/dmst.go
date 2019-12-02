@@ -4,7 +4,10 @@ import (
 	"errors"
 	"fmt"
 	"log"
+	"strconv"
 	"sync"
+	"time"
+	"os"
 )
 
 const Infinite = (1<<31) - 1
@@ -34,6 +37,8 @@ type Node struct {
 
 	serv *server
 	done chan struct{}
+
+	f *os.File
 
 	peers map[int]string
 	me    int
@@ -70,13 +75,12 @@ func NewNode(peers map[int]string, me int) *Node {
 		panic(errors.New("Reserved instanceID('0')"))
 	}
 
+	f, _ := os.Create("log/" + strconv.Itoa(me) + ".txt")
 	node := &Node{
 		done: make(chan struct{}),
-
+		f: f,
 		peers: peers,
 		me:    me,
-
-		// Communication channel
 		msgChan: make(chan *MessageArgs, 20*len(peers)),
 	}
 
@@ -316,6 +320,34 @@ func (node *Node) changeCoreProcedure() {
 	// todo
 }
 
+func (node *Node) logNode() {
+	_, err := node.f.WriteString(fmt.Sprintf("TIME >> %v >> NODE >> %d %s\n", time.Now(), node.me, node.state))
+	if err != nil {
+		fmt.Println(err)
+		node.f.Close()
+		return
+	}
+}
+
+func (node *Node) logEdges() {
+	for k, v := range node.edgeMap {
+		_, err := node.f.WriteString(fmt.Sprintf("TIME >> %v >> EDGE >> %d %d %d %s\n", time.Now(), node.me, k, v.weight, v.state))
+		if err != nil {
+			fmt.Println(err)
+			node.f.Close()
+			return
+		}
+	}
+}
+
 func (node *Node) halt() {
 	// todo, stop function
+
+	node.logNode()
+	node.logEdges()
+	err := node.f.Close()
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
 }
