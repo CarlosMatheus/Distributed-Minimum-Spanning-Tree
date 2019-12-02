@@ -1,4 +1,4 @@
-package raft
+package DMST
 
 const (
 	minElectionTimeoutMilli int = 500

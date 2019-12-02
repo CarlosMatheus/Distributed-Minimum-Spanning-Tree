@@ -1,4 +1,4 @@
-package raft
+package DMST
 
 // RequestVoteArgs is the struct that hold data passed to
 // RequestVote RPC calls.

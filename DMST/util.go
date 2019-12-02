@@ -1,4 +1,4 @@
-package raft
+package DMST
 
 import (
 	"math/rand"

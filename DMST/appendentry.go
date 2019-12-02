@@ -1,4 +1,4 @@
-package raft
+package DMST
 
 // AppendEntryArgs is invoked by leader to replicate log entries; also used as
 // heartbeat.

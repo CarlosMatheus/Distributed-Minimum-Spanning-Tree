@@ -3,7 +3,7 @@ package main
 import (
 	"flag"
 	"hash/fnv"
-	// "labRaft/raft"
+	//"Distributed-Minimum-Spanning-Tree/DMST"
 	// "log"
 	"math/rand"
 	"time"
@@ -36,15 +36,15 @@ func main() {
 
 	peers := makePeers(*ID, nIDs)
 
-	// fmt.Print(peers)
+	fmt.Print(peers)
 
 	// if _, ok := peers[*nodeID]; !ok {
 	// 	log.Fatalf("[MAIN] Invalid instance id.\n")
 	// }
 
-	node := node.NewNode(peers, *nodeID)
+	// node := node.NewNode(peers, *nodeID)
 
-	<-node.Done()
+	// <-node.Done()
 }
 
 func makePeers(ID int, nIDs []string) map[int]string{
