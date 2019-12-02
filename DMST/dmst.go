@@ -111,12 +111,23 @@ func awakeningResponse(node *Node) {
 	}
 }
 
-func wakeupProcedure(node *Node) {
-
+func getMinEdge(node *Node) Edge {
+	var minEdge Edge
+	var minEdgeVal = (1<<31) - 1
+	for _, edge := range node.edgeList {
+		if edge.weight < minEdgeVal {
+			minEdgeVal = edge.weight
+			minEdge = edge
+		}
+	}
+	return minEdge
 }
 
+func wakeupProcedure(node *Node) {
+	//
+	minEdge := getMinEdge(node)
 
-
+}
 
 // All changes to Node structure should occur in the context of this routine.
 // This way it's not necessary to use synchronizers to protect shared data.
