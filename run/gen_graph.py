@@ -11,7 +11,10 @@ BasicState = "Basic"
 state_to_color = {
     SleepingState: "aquamarine",
     FindState: "deepskyblue1",
-    FoundState: "gold1"
+    FoundState: "gold1",
+    RejectedState: "tomato",
+    BranchState: "navajowhite",
+    BasicState: "lightblue"
 }
 
 
@@ -38,17 +41,17 @@ class Graph:
     def get_node_by_id(self, node_id):
         return self.node_hash[node_id]
 
-    def print_graph(self):
-        f = Digraph('graph', filename='graph.gv')
+    def print_graph(self, idx="000"):
+        name = 'graph' + idx
+        f = Digraph(name, filename=name + '.gv', format='png')
 
         for node in self.node_list:
-            # f.attr(style='filled', color=state_to_color[node.state])
             f.node(node.id, style='filled', color=state_to_color[node.state])
 
         for edge in self.edge_list:
-            f.edge(edge.from_node.id, edge.to_node.id, label=edge.weight)
+            f.edge(edge.from_node.id, edge.to_node.id, label=edge.weight, color=state_to_color[edge.state])
 
-        f.view()
+        f.render()
 
 
 class Node:
@@ -111,5 +114,8 @@ def make_graph():
 
 graph = make_graph()
 graph.print_graph()
+
+
+
 
 
