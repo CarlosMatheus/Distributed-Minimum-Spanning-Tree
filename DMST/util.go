@@ -8,16 +8,16 @@ import (
 // BroadcastInterval << ElectionTimeout << MTBF
 // MTBF = Mean Time Between Failures
 
-func (raft *Raft) electionTimeout() time.Duration {
+func (node *Node) electionTimeout() time.Duration {
 	timeout := minElectionTimeoutMilli + rand.Intn(maxElectionTimeoutMilli-minElectionTimeoutMilli)
 	return time.Duration(timeout) * time.Millisecond
 }
 
-func (raft *Raft) broadcastInterval() time.Duration {
+func (node *Node) broadcastInterval() time.Duration {
 	timeout := minElectionTimeoutMilli / 10
 	return time.Duration(timeout) * time.Millisecond
 }
 
-func (raft *Raft) resetElectionTimeout() {
-	raft.electionTick = time.NewTimer(raft.electionTimeout()).C
+func (node *Node) resetElectionTimeout() {
+	node.electionTick = time.NewTimer(node.electionTimeout()).C
 }

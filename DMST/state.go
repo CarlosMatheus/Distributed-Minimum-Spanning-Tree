@@ -12,8 +12,8 @@ const (
 )
 
 // resetState will reset the state of a node when new term is discovered.
-func (raft *Raft) resetState(term int) {
-	raft.currentTerm = term
-	raft.votedFor = 0
-	raft.currentState.Set(follower)
+func (node *Node) resetState(term int) {
+	node.currentTerm = term
+	node.votedFor = 0
+	node.currentState.Set(follower)
 }

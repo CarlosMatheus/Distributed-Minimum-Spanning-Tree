@@ -2,6 +2,8 @@ package main
 
 import (
 	"flag"
+	"Distributed-Minimum-Spanning-Tree/DMST"
+	// "log"
 	"fmt"
 	"strconv"
 	"strings"
@@ -23,9 +25,13 @@ func main() {
 
 	fmt.Print(peers)
 
-	node := node.NewNode(peers, *nodeID)
+	// if _, ok := peers[*nodeID]; !ok {
+	// 	log.Fatalf("[MAIN] Invalid instance id.\n")
+	// }
 
-	<-node.Done()
+	node := DMST.NewNode(peers, *ID)
+
+	 <-node.Done()
 }
 
 func makePeers(ID int, nIDs []string) map[int]string{

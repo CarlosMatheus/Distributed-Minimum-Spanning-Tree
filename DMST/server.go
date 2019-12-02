@@ -12,11 +12,11 @@ type server struct {
 	rpcs *RPC
 }
 
-func newServer(raft *Raft, hostname string) (*server, error) {
+func newServer(node *Node, hostname string) (*server, error) {
 	var serv *server
 
 	serv = &server{
-		rpcs:     &RPC{raft},
+		rpcs:     &RPC{node},
 		hostname: hostname,
 	}
 
