@@ -47,11 +47,12 @@ type Node struct {
 	fragment int   // FN
 	findCount int
 	inBranch int
+	bestEdge *Edge
 	bestEdgeWeight int
 
-	testEdge Edge
-	edgeList [] Edge // todo initialize this variable on new Nodes
 
+	testEdge *Edge
+	edgeList [] *Edge // todo initialize this variable on new Nodes
 	edgeMap map[int]*Edge // todo initialize this variable on new Nodes
 }
 
@@ -107,8 +108,8 @@ func (node *Node) loop() {
 			args := &MessageArgs{
 				Type: InitiateType,
 				NodeLevel: 1,
-				NodeStatus: 2,
-				NodeFragement: 3,
+				NodeStatus: SleepingState,
+				NodeFragment: 3,
 				EdgeWeight: 4,
 			} 
 			go func(peer int) {
@@ -230,20 +231,20 @@ func (node *Node) responseToInitiate(message *MessageArgs) {
 	node.
 }
 
-func (node *Node) onTest(level int, fragment int, edge Edge) {
+func (node *Node) responseToTest(msg *MessageArgs) {
 	if node.state == SleepingState {
 		node.wakeupProcedure()
 	}
-	if level > node.level {
-		// place msg to the queue
+	if msg.NodeLevel > node.level {
+		node.placeReceivedMessageOnEndOfQueue(msg)
 	} else {
-		if fragment != node.fragment {
-			node.onAccept(edge)
+		if msg.NodeFragment != node.fragment {
+			node.responseToAccept(msg.EdgeWeight)
 		} else {
-			if edge.state == BasicState {
-				edge.state = RejectedState
-				if node.testEdge.weight != edge.weight {
-					node.onReject(edge)
+			if node.edgeMap[msg.EdgeWeight].state == BasicState {
+				node.edgeMap[msg.EdgeWeight].state = RejectedState
+				if node.testEdge.weight != msg.EdgeWeight {
+					node.responseToReject(msg.EdgeWeight)
 				} else {
 					// execute test
 				}
@@ -252,19 +253,19 @@ func (node *Node) onTest(level int, fragment int, edge Edge) {
 	}
 }
 
-func (node *Node) onAccept(edge Edge){
-	//node.testEdge = nil
-	if edge.weight < node.bestEdge.weight {
-		node.bestEdge = edge
+func (node *Node) responseToAccept(weight int){
+	node.testEdge = nil
+	if weight < node.bestEdgeWeight{
+		node.bestEdgeWeight = weight
 	}
-	// execute report
+	// execute procedure report
 }
 
-func (node *Node) onReject(edge Edge){
-	if edge.state == BasicState {
-		edge.state = RejectedState
+func (node *Node) responseToReject(weight int){
+	if node.edgeMap[weight].state == BasicState {
+		node.edgeMap[weight].state = RejectedState
 	}
-	// execute test
+	// execute procedure test
 }
 
 func (node *Node) reportProcedure() {
