@@ -49,7 +49,7 @@ type Node struct {
 	inBranch int
 
 	bestEdge *Edge
-	bestEdgeWeight *Edge
+	bestEdgeWeight int
 
 	testEdge *Edge
 	edgeList [] *Edge // todo initialize this variable on new Nodes
@@ -244,12 +244,12 @@ func (node *Node) responseToTest(msg *MessageArgs) {
 		node.placeReceivedMessageOnEndOfQueue(msg)
 	} else {
 		if msg.NodeFragment != node.fragment {
-			node.responseToAccept(edge)
+			node.responseToAccept(msg.EdgeWeight)
 		} else {
 			if node.edgeMap[msg.EdgeWeight].state == BasicState {
 				node.edgeMap[msg.EdgeWeight].state = RejectedState
 				if node.testEdge.weight != msg.EdgeWeight {
-					node.responseToReject(edge)
+					node.responseToReject(msg.EdgeWeight)
 				} else {
 					// execute test
 				}
@@ -260,16 +260,15 @@ func (node *Node) responseToTest(msg *MessageArgs) {
 
 func (node *Node) responseToAccept(weight int){
 	node.testEdge = nil
-	if weight < node.bestEdge.weight {
-		node.bestEdge = edge
+	if weight < node.bestEdgeWeight{
+		node.bestEdgeWeight = weight
 	}
-	// execute report
+	// execute procedure report
 }
 
-func (node *Node) responseToReject(edge Edge){
-	if edge.state == BasicState {
-		edge.state = RejectedState
+func (node *Node) responseToReject(weight int){
+	if node.edgeMap[weight].state == BasicState {
+		node.edgeMap[weight].state = RejectedState
 	}
-	// execute test
+	// execute procedure test
 }
-
