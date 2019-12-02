@@ -41,7 +41,7 @@ type Node struct {
 
 	edgeList [] Edge // todo initialize this variable on new Nodes
 
-	edgeMap map[int]Edge // todo initialize this variable on new Nodes
+	edgeMap map[int]*Edge // todo initialize this variable on new Nodes
 
 	currentState *util.ProtectedString
 	currentTerm  int
@@ -157,16 +157,11 @@ func (node *Node) responseToConnect(msg *MessageArgs) {
 	}
 }
 
-func (node *Node) responseToInitiate(newNodeLevel int, newNodeFragment int, newNodeStatus string, arrivingEdge int) {
-
-	newInBranch := arrivingEdge
-
-	node.level = newNodeLevel
-	node.fragment = newNodeFragment
-	node.state = newNodeStatus
-	node.inBranch = newInBranch
-
-
+func (node *Node) responseToInitiate(msg *MessageArgs) {
+	node.level = msg.NodeLevel
+	node.fragment = msg.NodeFragement
+	node.state = msg.NodeStatus
+	node.inBranch = arrivingEdge
 }
 
 func (node *Node) onTest(level int, fragment int, edge Edge) {

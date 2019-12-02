@@ -7,7 +7,7 @@ package DMST
 type MessageArgs struct {
 	Type string
 	NodeLevel int
-	NodeStatus int
+	NodeStatus string
 	NodeFragement int
 	EdgeWeight int
 
