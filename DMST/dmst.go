@@ -1,7 +1,6 @@
 package DMST
 
 import (
-	_ "Distributed-Minimum-Spanning-Tree/util"
 	"errors"
 	"fmt"
 	"labRaft/util"
@@ -157,13 +156,12 @@ func (node *Node) responseToConnect(newNodeLevel int, arrivingEdge int) {
 	}
 }
 
-func (node *Node) responseToInitiate(newNodeLevel int, newNodeFragment int, newNodeStatus string, arrivingEdge int) {
+func (node *Node) responseToInitiate(message *MessageArgs) {
+	newInBranch := MessageArgs.receivingID // todo modify
 
-	newInBranch := arrivingEdge
-
-	node.nodeLevel = newNodeLevel
-	node.nodeFragment = newNodeFragment
-	node.nodeStatus = newNodeStatus
+	node.nodeLevel = message.NodeLevel
+	node.nodeFragment = message.NodeFragment
+	node.nodeStatus = message.NodeStatus
 	node.inBranch = newInBranch
 
 
@@ -219,11 +217,11 @@ func (node *Node) loop() {
 	for {
 		if node.me == 2{
 			args := &MessageArgs{
-				Type: "Teste",
-				NodeLevel: 1,
-				NodeStatus: 2,
-				NodeFragement: 3,
-				EdgeWeight: 4,
+				Type:         "Teste",
+				NodeLevel:    1,
+				NodeStatus:   2,
+				NodeFragment: 3,
+				EdgeWeight:   4,
 			} 
 			// go func(peer int) {
 				reply := &MessageReply{}

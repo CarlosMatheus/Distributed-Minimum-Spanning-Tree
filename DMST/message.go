@@ -5,11 +5,11 @@ package DMST
 // Term  	- leader’s term
 // leaderId - so follower can redirect clients
 type MessageArgs struct {
-	Type string
-	NodeLevel int
-	NodeStatus int
-	NodeFragement int
-	EdgeWeight int
+	Type         string
+	NodeLevel    int
+	NodeStatus   int
+	NodeFragment int
+	EdgeWeight   int
 
 	// internal
 	replyChan chan *MessageReply
