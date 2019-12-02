@@ -111,8 +111,8 @@ def make_graph():
                 begin, end = row.split(' -- ')
                 node_id_1 = begin[-1]
                 node_id_2 = end[0]
-                print(node_id_1)
-                print(node_id_2)
+                # print(node_id_1)
+                # print(node_id_2)
 
                 if not graph.has_node_id(node_id_1):
                     node_1 = graph.add_node(node_id_1, SleepingState)
@@ -125,8 +125,8 @@ def make_graph():
                     node_2 = graph.get_node_by_id(node_id_2)
 
                 _, label, _, weight, _ = end.split('"')
-                print(label)
-                print(weight)
+                # print(label)
+                # print(weight)
 
                 edge1 = Edge(node_1, node_2, weight, BasicState)
                 edge2 = Edge(node_2, node_1, weight, BasicState)
@@ -135,6 +135,32 @@ def make_graph():
                 node_2.add_edge(edge2)
 
     return graph
+
+
+def merge_log_files():
+    files = []
+    folder = 'logs'
+    for r, d, f in os.walk(folder):
+        for file in f:
+            if '.txt' in file and 'log' not in file:
+                files.append(os.path.join(r, file))
+
+    lt = []
+    for file in files:
+        f = open(file, 'r')
+        row_list = f.read().split('\n')
+        lt += row_list
+
+    lt = [x for x in lt if x]
+    lt.sort()
+
+    new_lt = []
+    for item in lt:
+        _, end = item.split('0 >> ')
+        new_lt.append(end)
+
+    f = open(path.join('logs', 'log.txt'), 'w')
+    f.write('\n'.join(new_lt))
 
 
 def gen_graphs_variation_from_log(graph):
@@ -147,10 +173,10 @@ def gen_graphs_variation_from_log(graph):
             node = graph.get_node_by_id(node_id)
             node.set_state(new_state)
         elif begin.startswith('EDGE'):
-            node_id, edge_id, new_edge_state = end.split(' ')
+            node_id, _, edge_id, new_edge_state = end.split(' ')
             node = graph.get_node_by_id(node_id)
             edge = node.get_edge_by_id(edge_id)
-            edge.set_state(new_state)
+            edge.set_state(new_edge_state)
         else:
             print('erro')
         graph.print_graph("%03d" % (idx+1))
@@ -158,6 +184,7 @@ def gen_graphs_variation_from_log(graph):
 
 graph = make_graph()
 graph.print_graph()
+merge_log_files()
 gen_graphs_variation_from_log(graph)
 
 files = []
@@ -175,5 +202,4 @@ files.sort()
 images = []
 for filename in files:
     images.append(imageio.imread(filename))
-imageio.mimsave('movie.gif', images, duration=0.5)
-
+imageio.mimsave('movie.gif', images, duration=0.15)
