@@ -124,10 +124,17 @@ func (node *Node) getMinEdge() Edge {
 	return minEdge
 }
 
-func (node *Node) wakeupProcedure() {
-	//
-	//minEdge := getMinEdge(node)
+func (node *Node) connect(targetNodeID int) {
+	// todo create connect function
+}
 
+func (node *Node) wakeupProcedure() {
+	minEdge := node.getMinEdge()
+	minEdge.edgeStatus = BRANCH_STATE
+	node.nodeLevel = 0
+	node.nodeStatus = FOUND_STATE
+	node.findCount = 0
+	node.connect(minEdge.targetNodeID)
 }
 
 // All changes to Node structure should occur in the context of this routine.
