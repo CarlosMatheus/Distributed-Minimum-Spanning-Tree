@@ -27,8 +27,7 @@ type Node struct {
 	me    int
 
 	// Communication channels
-	sendMsgChan chan *sendMessageArgs
-	receiveMsgChan chan *receiveMsgArgs
+	msgChan chan *MessageArgs
 
 	// GHS variables
 	nodeLevel int	   // LN
@@ -40,7 +39,15 @@ type Node struct {
 	testEdge Edge
 
 	edgeList [] Edge // todo initialize this variable on new Nodes
+
 	edgeMap map[int]Edge // todo initialize this variable on new Nodes
+
+	currentState *util.ProtectedString
+	currentTerm  int
+	votedFor     int
+
+	// Goroutine communication channels
+	electionTick    <-chan time.Time
 }
 
 type Edge struct {
@@ -64,9 +71,8 @@ func NewNode(peers map[int]string, me int) *Node {
 		peers: peers,
 		me:    me,
 
-		// Communication channels
-		sendMsgChan: make(chan *sendMessageArgs, 20*len(peers)),
-		receiveMsgChan: make(chan *receiveMsgArgs, 20*len(peers)),
+		// Communication channel
+		msgChan: make(chan *MessageArgs, 20*len(peers)),
 	}
 
 	node.serv, err = newServer(node, peers[me])
@@ -191,191 +197,40 @@ func (node *Node) loop() {
 		panic(err)
 	}
 
-	node.currentState.Set(follower)
 	for {
-		switch node.currentState.Get() {
-		case follower:
-			node.followerSelect()
-		case candidate:
-			node.candidateSelect()
-		case leader:
-			node.leaderSelect()
+		if node.me == 2{
+			args := &MessageArgs{
+				Type: "Teste",
+				NodeLevel: 1,
+				NodeStatus: 2,
+				NodeFragement: 3,
+				EdgeWeight: 4,
+			} 
+			// go func(peer int) {
+				reply := &MessageReply{}
+				node.sendMessage(1, args, reply)
+			// }(1)
+		}
+
+		if node.me == 1{
+			node.handler()
 		}
 	}
 }
+
+
 
 // followerSelect implements the logic to handle messages from distinct
 // events when in follower state.
-func (node *Node) followerSelect() {
-	log.Println("[FOLLOWER] Run Logic.")
-	node.resetElectionTimeout()
+func (node *Node) handler() {
+	log.Println("Starting Handler")
 	for {
-		select {
-		case <-node.electionTick:
-			log.Println("[FOLLOWER] Election timeout.")
-			node.currentState.Set(candidate)
+		msg := <-node.msgChan
+		switch msg.Type{
+		case "Teste":
+			log.Println("Message received")
+			log.Println(msg)
 			return
-
-		case rv := <-node.requestVoteChan:
-			///////////////////
-			//  MODIFY HERE  //
-			reply := &RequestVoteReply{
-				Term: node.currentTerm,
-			}
-
-			log.Printf("[FOLLOWER] Vote denied to '%v' for term '%v'.\n", node.peers[rv.CandidateID], node.currentTerm)
-
-			reply.VoteGranted = false
-			rv.replyChan <- reply
-			break
-			// END OF MODIFY //
-			///////////////////
-
-		case ae := <-node.appendEntryChan:
-			///////////////////
-			//  MODIFY HERE  //
-			reply := &AppendEntryReply{
-				Term: node.currentTerm,
-			}
-
-			log.Printf("[FOLLOWER] Accept AppendEntry from '%v'.\n", node.peers[ae.LeaderID])
-			reply.Success = true
-			ae.replyChan <- reply
-			break
-			// END OF MODIFY //
-			///////////////////
-		}
-	}
-}
-
-// candidateSelect implements the logic to handle messages from distinct
-// events when in candidate state.
-func (node *Node) candidateSelect() {
-	log.Println("[CANDIDATE] Run Logic.")
-	// Candidates (§5.2):
-	// Increment currentTerm, vote for self
-	node.currentTerm++
-	node.votedFor = node.me
-	voteCount := 1
-
-	log.Printf("[CANDIDATE] Running for term '%v'.\n", node.currentTerm)
-	// Reset election timeout
-	node.resetElectionTimeout()
-	// Send RequestVote RPCs to all other servers
-	replyChan := make(chan *RequestVoteReply, 10*len(node.peers))
-	node.broadcastRequestVote(replyChan)
-
-	for {
-		select {
-		case <-node.electionTick:
-			// If election timeout elapses: start new election
-			log.Println("[CANDIDATE] Election timeout.")
-			node.currentState.Set(candidate)
-			return
-		case rvr := <-replyChan:
-			///////////////////
-			//  MODIFY HERE  //
-
-			if rvr.VoteGranted {
-				log.Printf("[CANDIDATE] Vote granted by '%v'.\n", node.peers[rvr.peerIndex])
-				voteCount++
-				log.Println("[CANDIDATE] VoteCount: ", voteCount)
-				break
-			}
-			log.Printf("[CANDIDATE] Vote denied by '%v'.\n", node.peers[rvr.peerIndex])
-
-			// END OF MODIFY //
-			///////////////////
-
-		case rv := <-node.requestVoteChan:
-			///////////////////
-			//  MODIFY HERE  //
-			reply := &RequestVoteReply{
-				Term: node.currentTerm,
-			}
-
-			log.Printf("[CANDIDATE] Vote denied to '%v' for term '%v'.\n", node.peers[rv.CandidateID], node.currentTerm)
-			reply.VoteGranted = false
-			rv.replyChan <- reply
-			break
-			// END OF MODIFY //
-			///////////////////
-
-		case ae := <-node.appendEntryChan:
-			///////////////////
-			//  MODIFY HERE  //
-			reply := &AppendEntryReply{
-				Term: node.currentTerm,
-			}
-
-			log.Printf("[CANDIDATE] Accept AppendEntry from '%v'.\n", node.peers[ae.LeaderID])
-			reply.Success = true
-			ae.replyChan <- reply
-			break
-			// END OF MODIFY //
-			///////////////////
-		}
-	}
-}
-
-// leaderSelect implements the logic to handle messages from distinct
-// events when in leader state.
-func (node *Node) leaderSelect() {
-	log.Println("[LEADER] Run Logic.")
-	replyChan := make(chan *AppendEntryReply, 10*len(node.peers))
-	node.broadcastAppendEntries(replyChan)
-
-	heartbeat := time.NewTicker(node.broadcastInterval())
-	defer heartbeat.Stop()
-
-	broadcastTick := make(chan time.Time)
-	defer close(broadcastTick)
-
-	go func() {
-		for t := range heartbeat.C {
-			broadcastTick <- t
-		}
-	}()
-
-	for {
-		select {
-		case <-broadcastTick:
-			node.broadcastAppendEntries(replyChan)
-		case aet := <-replyChan:
-			///////////////////
-			//  MODIFY HERE  //
-			_ = aet
-			// END OF MODIFY //
-			///////////////////
-		case rv := <-node.requestVoteChan:
-			///////////////////
-			//  MODIFY HERE  //
-
-			reply := &RequestVoteReply{
-				Term: node.currentTerm,
-			}
-
-			log.Printf("[LEADER] Vote denied to '%v' for term '%v'.\n", node.peers[rv.CandidateID], node.currentTerm)
-			reply.VoteGranted = false
-			rv.replyChan <- reply
-			break
-
-			// END OF MODIFY //
-			///////////////////
-
-		case ae := <-node.appendEntryChan:
-			///////////////////
-			//  MODIFY HERE  //
-			reply := &AppendEntryReply{
-				Term: node.currentTerm,
-			}
-
-			log.Printf("[LEADER] Accept AppendEntry from '%v'.\n", node.peers[ae.LeaderID])
-			reply.Success = true
-			ae.replyChan <- reply
-			break
-			// END OF MODIFY //
-			///////////////////
 		}
 	}
 }
