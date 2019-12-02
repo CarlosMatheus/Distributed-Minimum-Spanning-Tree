@@ -58,7 +58,8 @@ type Node struct {
 
 type Edge struct {
 	weight int
-	edgeStatus int  // SE
+	edgeStatus string  // SE
+	targetNodeID int
 }
 
 // NewNode create a new node object and return a pointer to it.
@@ -100,7 +101,7 @@ func debugPrint(s string){
 	fmt.Print(s)
 }
 
-func awakeningResponse(node *Node) {
+func (node *Node) awakeningResponse() {
 	// Is a reponse to a awake call, this can only occur to sleeping node
 	if node.nodeStatus == SLEEPING_STATE {
 		// ok
@@ -111,7 +112,7 @@ func awakeningResponse(node *Node) {
 	}
 }
 
-func getMinEdge(node *Node) Edge {
+func (node *Node) getMinEdge() Edge {
 	var minEdge Edge
 	var minEdgeVal = (1<<31) - 1
 	for _, edge := range node.edgeList {
@@ -123,9 +124,9 @@ func getMinEdge(node *Node) Edge {
 	return minEdge
 }
 
-func wakeupProcedure(node *Node) {
+func (node *Node) wakeupProcedure() {
 	//
-	minEdge := getMinEdge(node)
+	//minEdge := getMinEdge(node)
 
 }
 
