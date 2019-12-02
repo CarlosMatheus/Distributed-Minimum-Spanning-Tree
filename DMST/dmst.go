@@ -4,6 +4,7 @@ import (
 	_ "Distributed-Minimum-Spanning-Tree/util"
 	"errors"
 	"fmt"
+	"labRaft/util"
 	"log"
 	"sync"
 	"time"
@@ -52,8 +53,8 @@ type Node struct {
 }
 
 type Edge struct {
-	weight int
-	edgeStatus string  // SE
+	weight       int
+	state        string // SE
 	targetNodeID int
 }
 
@@ -124,7 +125,7 @@ func (node *Node) connect(targetNodeID int) {
 
 func (node *Node) wakeupProcedure() {
 	minEdge := node.getMinEdge()
-	minEdge.edgeStatus = BranchState
+	minEdge.state = BranchState
 	node.level = 0
 	node.state = FoundState
 	node.findCount = 0
@@ -141,8 +142,8 @@ func (node *Node) onTest(level int, fragment int, edge Edge) {
 		if fragment != node.fragment {
 			node.onAccept(edge)
 		} else {
-			if edge.edgeStatus == BasicState {
-				edge.edgeStatus = RejectedState
+			if edge.state == BasicState {
+				edge.state = RejectedState
 				if node.testEdge.weight != edge.weight {
 					node.onReject(edge)
 				} else {
@@ -162,8 +163,8 @@ func (node *Node) onAccept(edge Edge){
 }
 
 func (node *Node) onReject(edge Edge){
-	if edge.edgeStatus == BasicState {
-		edge.edgeStatus = RejectedState
+	if edge.state == BasicState {
+		edge.state = RejectedState
 	}
 	// execute test
 }
