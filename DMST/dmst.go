@@ -166,13 +166,13 @@ func (node *Node) awakeningResponse() {
 	}
 }
 
-func (node *Node) getMinEdge() Edge {
-	var minEdge Edge
+func (node *Node) getMinEdge() *Edge {
+	var minEdge *Edge
 	var minEdgeVal = Infinite
 	for _, edge := range node.edgeMap {
 		if edge.weight < minEdgeVal {
 			minEdgeVal = edge.weight
-			minEdge = *edge
+			minEdge = edge
 		}
 	}
 	return minEdge
@@ -228,7 +228,6 @@ func (node *Node) responseToInitiate(message *MessageArgs) {
 	node.fragment = message.NodeFragment
 	node.state = message.NodeStatus
 	node.inBranch = message.FromID
-
 	node.bestEdgeWeight = Infinite
 
 	for edgeWeight, edge := range node.edgeMap {
@@ -277,7 +276,7 @@ func (node *Node) responseToTest(msg *MessageArgs) {
 				if node.testEdge.weight != msg.EdgeWeight {
 					node.responseToReject(msg.EdgeWeight)
 				} else {
-					// execute test
+					node.procedureTest()
 				}
 			}
 		}
@@ -289,14 +288,14 @@ func (node *Node) responseToAccept(weight int){
 	if weight < node.bestEdgeWeight{
 		node.bestEdgeWeight = weight
 	}
-	// execute procedure report
+	node.reportProcedure()
 }
 
 func (node *Node) responseToReject(weight int){
 	if node.edgeMap[weight].state == BasicState {
 		node.edgeMap[weight].state = RejectedState
 	}
-	// execute procedure test
+	node.procedureTest()
 }
 
 func (node *Node) reportProcedure() {
@@ -305,7 +304,7 @@ func (node *Node) reportProcedure() {
 		args := &MessageArgs{
 			FromID: node.me,
 			Type: ReportType,
-			BestEdgeWeight: node.bestEdgeWeight
+			BestEdgeWeight: node.bestEdgeWeight,
 		} 
 		go func(peer int) {
 			reply := &MessageReply{}
@@ -316,21 +315,22 @@ func (node *Node) reportProcedure() {
 
 func (node *Node) responseToReport(msg *MessageArgs) {
 	if msg.FromID != node.inBranch {
-		node.findCount -= node.findCount - 1
-		if weight < node.bestEdgeWeight {
-			node.bestEdgeWeight = weight
+		node.findCount -= 1
+		if msg.BestEdgeWeight < node.bestEdgeWeight {
+			node.bestEdgeWeight = msg.BestEdgeWeight
 		}
 		node.reportProcedure()
-	}
-	else if node.state == FindState {
+	} else if node.state == FindState {
 		node.placeMessageEndOfQueue(msg)
-	}
-	else if weight > node.bestEdgeWeight {
+	} else if msg.BestEdgeWeight > node.bestEdgeWeight {
 		node.changeCoreProcedure()
-	}
-	else if weight == node.bestEdgeWeight == Infinite {
+	} else if msg.BestEdgeWeight == node.bestEdgeWeight && node.bestEdgeWeight == Infinite {
 		node.halt()
 	}
+}
+
+func (node *Node) changeCoreProcedure() {
+	// todo
 }
 
 func (node *Node) halt() {
