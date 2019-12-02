@@ -50,7 +50,6 @@ type Node struct {
 	bestEdge *Edge
 	bestEdgeWeight int
 
-
 	testEdge *Edge
 	edgeList [] *Edge // todo initialize this variable on new Nodes
 	edgeMap map[int]*Edge // todo initialize this variable on new Nodes
@@ -183,7 +182,7 @@ func (node *Node) connect(targetNodeID int) {
 	// todo create connect function
 }
 
-func (node *Node) sendInitiate() {
+func (node *Node) sendInitiate(message *MessageArgs, edgeID int) {
 	// todo create send initiate function
 }
 
@@ -197,6 +196,7 @@ func (node *Node) wakeupProcedure() {
 }
 
 func (node *Node) placeMessageEndOfQueue(msg *MessageArgs) {
+	// todo verify this
 	node.msgChan <- msg
 }
 
@@ -213,7 +213,7 @@ func (node *Node) responseToConnect(msg *MessageArgs) {
 		if node.edgeMap[msg.EdgeWeight].state == BasicState {
 			node.placeMessageEndOfQueue(msg)
 		} else {
-			node.sendInitiate() // todo
+			node.sendInitiate(msg, msg.FromID)
 		}
 	}
 }
@@ -224,8 +224,24 @@ func (node *Node) responseToInitiate(message *MessageArgs) {
 	node.fragment = message.NodeFragment
 	node.state = message.NodeStatus
 	node.inBranch = message.FromID
+	node.bestEdgeWeight = Infinite
 
-	node.bestEdge = nil
+	for edgeWeight, edge := range node.edgeMap {
+		if edge.state == BranchState && edge.weight != message.FromID{
+			node.sendInitiate(message, edgeWeight) // on edge value
+			if message.NodeStatus == FindState {
+				node.findCount ++
+			}
+		}
+	}
+	if message.NodeStatus == FindState {
+		node.procedureTest()
+	}
+}
+
+func (node *Node) procedureTest() {
+	
+
 }
 
 func (node *Node) responseToTest(msg *MessageArgs) {
