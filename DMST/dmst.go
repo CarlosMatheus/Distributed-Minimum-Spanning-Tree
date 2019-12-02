@@ -55,7 +55,6 @@ type Node struct {
 	bestEdgeWeight int
 
 	testEdge *Edge
-	edgeList [] *Edge // todo initialize this variable on new Nodes
 	edgeMap map[int]*Edge // todo initialize this variable on new Nodes
 }
 
@@ -65,8 +64,28 @@ type Edge struct {
 	targetNodeID int
 }
 
+func initializeEdgeMap(nIDs []string, nWTs []string) map[int]*Edge{
+	var edge *Edge
+	var intID int
+	var intWT int
+	edgeMap := make(map[int]*Edge)
+
+	for i, _ := range nIDs {
+		intWT, _ = strconv.Atoi(nWTs[i])
+		intID, _ = strconv.Atoi(nIDs[i])
+		edge = &Edge{
+			weight: intWT,
+			state: BasicState,
+			targetNodeID: intID,
+		}
+		edgeMap[edge.weight] = edge
+	}
+
+	return edgeMap
+}
+
 // NewNode create a new node object and return a pointer to it.
-func NewNode(peers map[int]string, me int) *Node {
+func NewNode(peers map[int]string, nIDs []string, nWTs []string, me int) *Node {
 	var err error
 
 	// 0 is reserved to represent undefined vote/leader
@@ -74,10 +93,13 @@ func NewNode(peers map[int]string, me int) *Node {
 		panic(errors.New("Reserved instanceID('0')"))
 	}
 
+	edgeMap := initializeEdgeMap(nIDs, nWTs)
+
 	node := &Node{
 		done: make(chan struct{}),
 		peers: peers,
 		me:    me,
+		edgeMap: edgeMap,
 		msgChan: make(chan *MessageArgs, 20*len(peers)),
 	}
 
