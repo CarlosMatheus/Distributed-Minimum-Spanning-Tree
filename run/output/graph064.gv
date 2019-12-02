@@ -1,8 +1,8 @@
-digraph "output/graph054" {
+digraph "output/graph064" {
 	1 [color=gold1 style=filled]
-	2 [color=deepskyblue1 style=filled]
+	2 [color=gold1 style=filled]
 	3 [color=deepskyblue1 style=filled]
-	1 -> 2 [label=10 color=lightblue]
+	1 -> 2 [label=10 color=tomato]
 	2 -> 1 [label=10 color=tomato]
 	2 -> 3 [label=7 color=navajowhite]
 	3 -> 2 [label=7 color=navajowhite]

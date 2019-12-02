@@ -1,7 +1,7 @@
 digraph "output/graph011" {
 	1 [color=gold1 style=filled]
 	2 [color=aquamarine style=filled]
-	3 [color=gold1 style=filled]
+	3 [color=aquamarine style=filled]
 	1 -> 2 [label=10 color=lightblue]
 	2 -> 1 [label=10 color=lightblue]
 	2 -> 3 [label=7 color=lightblue]

@@ -1,21 +1,21 @@
-EDGE >> 3 1 5 Basic
-EDGE >> 3 2 7 Basic
-NODE >> 3 Sleeping
 EDGE >> 2 1 10 Basic
 EDGE >> 2 3 7 Basic
 NODE >> 2 Sleeping
+EDGE >> 3 1 5 Basic
+EDGE >> 3 2 7 Basic
+NODE >> 3 Sleeping
 EDGE >> 1 2 10 Basic
 EDGE >> 1 3 5 Branch
 NODE >> 1 Found
-NODE >> 3 Found
 EDGE >> 3 1 5 Branch
 EDGE >> 3 2 7 Basic
+NODE >> 3 Found
 EDGE >> 1 2 10 Basic
 EDGE >> 1 2 10 Basic
 EDGE >> 1 3 5 Branch
 EDGE >> 1 3 5 Branch
 NODE >> 1 Find
-NODE >> 1 Find
+NODE >> 1 Found
 EDGE >> 3 1 5 Branch
 EDGE >> 3 2 7 Basic
 NODE >> 3 Find
@@ -27,9 +27,9 @@ EDGE >> 2 3 7 Branch
 NODE >> 2 Found
 EDGE >> 2 1 10 Basic
 EDGE >> 2 3 7 Branch
+NODE >> 2 Found
 EDGE >> 3 1 5 Branch
 EDGE >> 3 2 7 Branch
-NODE >> 2 Found
 NODE >> 3 Find
 EDGE >> 2 1 10 Basic
 EDGE >> 2 3 7 Branch
@@ -41,8 +41,11 @@ EDGE >> 2 1 10 Basic
 EDGE >> 2 3 7 Branch
 NODE >> 2 Found
 EDGE >> 2 1 10 Basic
+EDGE >> 2 3 7 Branch
+NODE >> 2 Found
 EDGE >> 2 1 10 Basic
 EDGE >> 2 1 10 Basic
+EDGE >> 2 1 10 Rejected
 EDGE >> 2 1 10 Rejected
 EDGE >> 2 3 7 Branch
 EDGE >> 2 3 7 Branch
@@ -50,14 +53,14 @@ EDGE >> 2 3 7 Branch
 EDGE >> 2 3 7 Branch
 NODE >> 2 Find
 NODE >> 2 Find
-NODE >> 2 Find
+NODE >> 2 Found
 NODE >> 2 Found
 EDGE >> 1 2 10 Rejected
-EDGE >> 1 3 5 Branch
-NODE >> 1 Find
-EDGE >> 1 2 10 Rejected
 EDGE >> 1 2 10 Rejected
 EDGE >> 1 3 5 Branch
 EDGE >> 1 3 5 Branch
 NODE >> 1 Find
-NODE >> 1 Find
+NODE >> 1 Found
+EDGE >> 2 1 10 Rejected
+EDGE >> 2 3 7 Branch
+NODE >> 2 Found

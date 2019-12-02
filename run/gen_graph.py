@@ -202,4 +202,4 @@ files.sort()
 images = []
 for filename in files:
     images.append(imageio.imread(filename))
-imageio.mimsave('movie.gif', images, duration=0.15)
+imageio.mimsave('movie.gif', images, duration=0.35)

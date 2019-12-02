@@ -1,6 +1,6 @@
 digraph "output/graph051" {
-	1 [color=deepskyblue1 style=filled]
-	2 [color=deepskyblue1 style=filled]
+	1 [color=gold1 style=filled]
+	2 [color=gold1 style=filled]
 	3 [color=deepskyblue1 style=filled]
 	1 -> 2 [label=10 color=lightblue]
 	2 -> 1 [label=10 color=tomato]
