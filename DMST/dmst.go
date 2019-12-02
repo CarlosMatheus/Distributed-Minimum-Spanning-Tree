@@ -9,6 +9,8 @@ import (
 	"time"
 )
 
+const infInt = (1<<31) - 1
+
 // Node possible states
 const SleepingState = "Sleeping"
 const FindState = "Find"
@@ -48,8 +50,7 @@ type Node struct {
 	findCount int
 	inBranch int
 
-	bestEdge Edge
-	bestEdgeWeight Edge
+	bestEdgeWeight int
 
 	testEdge Edge
 	edgeList [] Edge // todo initialize this variable on new Nodes
@@ -177,7 +178,7 @@ func (node *Node) awakeningResponse() {
 
 func (node *Node) getMinEdge() Edge {
 	var minEdge Edge
-	var minEdgeVal = (1<<31) - 1
+	var minEdgeVal = infInt
 	for _, edge := range node.edgeList {
 		if edge.weight < minEdgeVal {
 			minEdgeVal = edge.weight
@@ -191,7 +192,7 @@ func (node *Node) connect(targetNodeID int) {
 	// todo create connect function
 }
 
-func (node *Node) sendInitiate() {
+func (node *Node) sendInitiate(message *MessageArgs, edgeID int) {
 	// todo create send initiate function
 }
 
@@ -205,6 +206,7 @@ func (node *Node) wakeupProcedure() {
 }
 
 func (node *Node) placeReceivedMessageOnEndOfQueue(msg *MessageArgs) {
+	// todo verify this
 	node.msgChan <- msg
 }
 
@@ -221,7 +223,7 @@ func (node *Node) responseToConnect(msg *MessageArgs) {
 		if node.edgeMap[msg.EdgeWeight].state == BasicState {
 			node.placeReceivedMessageOnEndOfQueue(msg)
 		} else {
-			node.sendInitiate() // todo
+			node.sendInitiate(msg, msg.FromID)
 		}
 	}
 }
@@ -233,8 +235,23 @@ func (node *Node) responseToInitiate(message *MessageArgs) {
 	node.state = message.NodeStatus
 	node.inBranch = message.FromID
 
-	node.bestEdge = Null
-	node.
+	node.bestEdgeWeight = infInt
+
+	for edgeWeight, edge := range node.edgeMap {
+		if edge.state == BranchState && edge.weight != message.FromID{
+			node.sendInitiate(message, edgeWeight) // on edge value
+			if message.NodeStatus == FindState {
+				node.findCount ++
+			}
+		}
+	}
+	if message.NodeStatus == FindState {
+		node.procedureTest()
+	}
+}
+
+func (node *Node) procedureTest() {
+	
 }
 
 func (node *Node) onTest(level int, fragment int, edge Edge) {
