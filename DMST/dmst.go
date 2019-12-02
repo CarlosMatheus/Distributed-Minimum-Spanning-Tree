@@ -3,6 +3,7 @@ package DMST
 import (
 	_ "Distributed-Minimum-Spanning-Tree/util"
 	"errors"
+	"fmt"
 	"log"
 	"sync"
 	"time"
@@ -52,11 +53,12 @@ type Node struct {
 	bestWt int
 	testEdge int
 
+	edgeList [] Edge // todo initialize this variable on new Nodes
 }
 
 type Edge struct {
 	weight int
-	edgeStatus int
+	edgeStatus int  // SE
 }
 
 // NewNode create a new node object and return a pointer to it.
@@ -94,13 +96,23 @@ func (node *Node) Done() <-chan struct{} {
 	return node.done
 }
 
+func debugPrint(s string){
+	fmt.Print(s)
+}
+
 func awakeningResponse(node *Node) {
 	// Is a reponse to a awake call, this can only occur to sleeping node
-	if (node.nodeStatus == SLEEPING_STATE) {
+	if node.nodeStatus == SLEEPING_STATE {
 		// ok
+		wakeupProcedure(node)
 	} else {
 		// problem
+		debugPrint("Error: awakeningResponse called when node not in sleeping state")
 	}
+}
+
+func wakeupProcedure(node *Node) {
+
 }
 
 
