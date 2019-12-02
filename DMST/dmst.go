@@ -1,21 +1,32 @@
 package DMST
 
 import (
-	_ "Distributed-Minimum-Spanning-Tree/util"
+	"Distributed-Minimum-Spanning-Tree/util"
 	"errors"
 	"fmt"
-	"labRaft/util"
 	"log"
 	"sync"
 	"time"
 )
 
+// Node possible states
 const SleepingState = "Sleeping"
 const FindState = "Find"
 const FoundState = "Found"
+
+// Edge possible states
 const RejectedState = "Rejected"
 const BranchState = "Branch"
 const BasicState = "Basic"
+
+// Connection possible types
+const ConnectType = "Connect"
+const InitiateType = "Initiate"
+const TestType = "Test"
+const AcceptType = "Accept"
+const RejectType = "Reject"
+const ReportType = "Report"
+const ChangeCoreType = "Change-core"
 
 // Node is the struct that hold all information that is used by this instance of node
 type Node struct {
@@ -38,7 +49,6 @@ type Node struct {
 	inBranch int
 	bestEdge Edge
 	testEdge Edge
-
 	edgeList [] Edge // todo initialize this variable on new Nodes
 
 	edgeMap map[int]*Edge // todo initialize this variable on new Nodes
@@ -89,6 +99,62 @@ func NewNode(peers map[int]string, me int) *Node {
 // Done returns a channel that will be used when the instance is done.
 func (node *Node) Done() <-chan struct{} {
 	return node.done
+}
+
+func (node *Node) loop() {
+
+	err := node.serv.startListening()
+	if err != nil {
+		panic(err)
+	}
+
+	for {
+		if node.me == 2{
+			args := &MessageArgs{
+				Type: InitiateType,
+				NodeLevel: 1,
+				NodeStatus: 2,
+				NodeFragement: 3,
+				EdgeWeight: 4,
+			} 
+			// go func(peer int) {
+				reply := &MessageReply{}
+				node.sendMessage(1, args, reply)
+			// }(1)
+		}
+
+		if node.me == 1{
+			node.handler()
+		}
+	}
+}
+
+func (node *Node) handler() {
+	log.Println("Starting Handler")
+	for {
+		msg := <-node.msgChan
+		node.messageLog(*msg)
+		switch msg.Type{
+			case ConnectType:
+				return
+			case InitiateType:
+				return
+			case TestType:
+				return
+			case AcceptType:
+				return
+			case RejectType:
+				return
+			case ReportType:
+				return
+			case ChangeCoreType:
+				return
+		}
+	}
+}
+
+func (node *Node) messageLog(msg MessageArgs){
+	log.Printf("[NODE %d] %s message received from node %d", node.me, msg.Type, msg.FromID)
 }
 
 func debugPrint(s string){
@@ -161,7 +227,7 @@ func (node *Node) responseToInitiate(msg *MessageArgs) {
 	node.level = msg.NodeLevel
 	node.fragment = msg.NodeFragement
 	node.state = msg.NodeStatus
-	node.inBranch = arrivingEdge
+	node.inBranch = msg.FromID
 }
 
 func (node *Node) onTest(level int, fragment int, edge Edge) {
@@ -187,7 +253,7 @@ func (node *Node) onTest(level int, fragment int, edge Edge) {
 }
 
 func (node *Node) onAccept(edge Edge){
-	node.testEdge = nil
+	//node.testEdge = nil
 	if edge.weight < node.bestEdge.weight {
 		node.bestEdge = edge
 	}
@@ -199,52 +265,4 @@ func (node *Node) onReject(edge Edge){
 		edge.state = RejectedState
 	}
 	// execute test
-}
-
-// All changes to Node structure should occur in the context of this routine.
-// This way it's not necessary to use synchronizers to protect shared data.
-// To send data to each of the states, use the channels provided.
-func (node *Node) loop() {
-
-	err := node.serv.startListening()
-	if err != nil {
-		panic(err)
-	}
-
-	for {
-		if node.me == 2{
-			args := &MessageArgs{
-				Type: "Teste",
-				NodeLevel: 1,
-				NodeStatus: 2,
-				NodeFragement: 3,
-				EdgeWeight: 4,
-			} 
-			// go func(peer int) {
-				reply := &MessageReply{}
-				node.sendMessage(1, args, reply)
-			// }(1)
-		}
-
-		if node.me == 1{
-			node.handler()
-		}
-	}
-}
-
-
-
-// followerSelect implements the logic to handle messages from distinct
-// events when in follower state.
-func (node *Node) handler() {
-	log.Println("Starting Handler")
-	for {
-		msg := <-node.msgChan
-		switch msg.Type{
-		case "Teste":
-			log.Println("Message received")
-			log.Println(msg)
-			return
-		}
-	}
 }
