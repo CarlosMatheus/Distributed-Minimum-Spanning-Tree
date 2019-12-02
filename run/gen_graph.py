@@ -1,4 +1,7 @@
 from graphviz import Digraph
+from os import path
+import os
+import imageio
 
 SleepingState = "Sleeping"
 FindState = "Find"
@@ -42,7 +45,9 @@ class Graph:
         return self.node_hash[node_id]
 
     def print_graph(self, idx="000"):
-        name = 'graph' + idx
+
+        name = path.join('output', 'graph' + idx)
+
         f = Digraph(name, filename=name + '.gv', format='png')
 
         for node in self.node_list:
@@ -112,10 +117,28 @@ def make_graph():
     return graph
 
 
+def gen_graphs_variation_from_log(graph):
+    pass
+
+
 graph = make_graph()
 graph.print_graph()
+gen_graphs_variation_from_log(graph)
 
+files = []
+folder = 'output'
+# r=root, d=directories, f = files
+for r, d, f in os.walk(folder):
+    for file in f:
+        if '.png' in file:
+            files.append(os.path.join(r, file))
 
+files.sort()
 
+# print(files)
 
+images = []
+for filename in files:
+    images.append(imageio.imread(filename))
+imageio.mimsave('movie.gif', images)
 

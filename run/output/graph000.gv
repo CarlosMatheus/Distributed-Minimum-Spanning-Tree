@@ -1,4 +1,4 @@
-digraph graph000 {
+digraph "output/graph000" {
 	a [color=aquamarine style=filled]
 	b [color=aquamarine style=filled]
 	c [color=aquamarine style=filled]
