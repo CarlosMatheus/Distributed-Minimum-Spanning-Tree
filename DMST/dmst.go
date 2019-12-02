@@ -31,15 +31,16 @@ type Node struct {
 	receiveMsgChan chan *receiveMsgArgs
 
 	// GHS variables
-	nodeLevel int
-	nodeStatus string
-	nodeFragment int
+	nodeLevel int	   // LN
+	nodeStatus string  // SN
+	nodeFragment int   // FN
 	findCount int
 	inBranch int
 	bestEdge Edge
 	testEdge Edge
 
 	edgeList [] Edge // todo initialize this variable on new Nodes
+	edgeMap map[int]Edge // todo initialize this variable on new Nodes
 }
 
 type Edge struct {
@@ -114,13 +115,51 @@ func (node *Node) connect(targetNodeID int) {
 	// todo create connect function
 }
 
+func (node *Node) sendInitiate() {
+	// todo create send initiate function
+}
+
 func (node *Node) wakeupProcedure() {
 	minEdge := node.getMinEdge()
-	minEdge.edgeStatus = BRANCH_STATE
+	minEdge.edgeStatus = BranchState
 	node.nodeLevel = 0
-	node.nodeStatus = FOUND_STATE
+	node.nodeStatus = FoundState
 	node.findCount = 0
 	node.connect(minEdge.targetNodeID)
+}
+
+func (node *Node) placeReceivedMessageOnEndOfQueue() {
+	// todo craete
+}
+
+func (node *Node) responseToConnect(newNodeLevel int, arrivingEdge int) {
+	if node.nodeStatus == SleepingState {
+		node.wakeupProcedure()
+	}
+	if newNodeLevel < node.nodeLevel {
+		node.edgeMap[arrivingEdge].edgeStatus = BranchState
+		if node.nodeStatus == FindState {
+			node.findCount++
+		}
+	} else {
+		if node.edgeMap[arrivingEdge].edgeStatus == BasicState {
+			node.placeReceivedMessageOnEndOfQueue()
+		} else {
+			node.sendInitiate() // todo
+		}
+	}
+}
+
+func (node *Node) responseToInitiate(newNodeLevel int, newNodeFragment int, newNodeStatus string, arrivingEdge int) {
+
+	newInBranch := arrivingEdge
+
+	node.nodeLevel = newNodeLevel
+	node.nodeFragment = newNodeFragment
+	node.nodeStatus = newNodeStatus
+	node.inBranch = newInBranch
+
+
 }
 
 func (node *Node) onTest(int level) {
