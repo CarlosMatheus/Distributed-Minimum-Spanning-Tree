@@ -53,7 +53,7 @@ type Node struct {
 
 type Edge struct {
 	weight       int
-	state        string // SE
+	State        string // SE
 	targetNodeID int
 }
 
@@ -102,7 +102,7 @@ func (node *Node) awakeningResponse() {
 		node.wakeupProcedure()
 	} else {
 		// problem
-		debugPrint("Error: awakeningResponse called when node not in sleeping state")
+		debugPrint("Error: awakeningResponse called when node not in sleeping State")
 	}
 }
 
@@ -128,7 +128,7 @@ func (node *Node) sendInitiate() {
 
 func (node *Node) wakeupProcedure() {
 	minEdge := node.getMinEdge()
-	minEdge.state = BranchState
+	minEdge.State = BranchState
 	node.level = 0
 	node.state = FoundState
 	node.findCount = 0
@@ -139,18 +139,18 @@ func (node *Node) placeReceivedMessageOnEndOfQueue(msg *MessageArgs) {
 	node.msgChan <- msg
 }
 
-func (node *Node) responseToConnect(newNodeLevel int, arrivingEdge int) {
-	if node.nodeStatus == SleepingState {
+func (node *Node) responseToConnect(msg *MessageArgs) {
+	if node.state == SleepingState {
 		node.wakeupProcedure()
 	}
-	if newNodeLevel < node.nodeLevel {
-		node.edgeMap[arrivingEdge].edgeStatus = BranchState
-		if node.nodeStatus == FindState {
+	if msg.NodeLevel < node.level {
+		node.edgeMap[msg.EdgeWeight].State = BranchState
+		if node.state == FindState {
 			node.findCount++
 		}
 	} else {
-		if node.edgeMap[arrivingEdge].edgeStatus == BasicState {
-			node.placeReceivedMessageOnEndOfQueue()
+		if node.edgeMap[msg.EdgeWeight].State == BasicState {
+			node.placeReceivedMessageOnEndOfQueue(msg)
 		} else {
 			node.sendInitiate() // todo
 		}
@@ -161,9 +161,9 @@ func (node *Node) responseToInitiate(newNodeLevel int, newNodeFragment int, newN
 
 	newInBranch := arrivingEdge
 
-	node.nodeLevel = newNodeLevel
-	node.nodeFragment = newNodeFragment
-	node.nodeStatus = newNodeStatus
+	node.level = newNodeLevel
+	node.fragment = newNodeFragment
+	node.state = newNodeStatus
 	node.inBranch = newInBranch
 
 
@@ -179,8 +179,8 @@ func (node *Node) onTest(level int, fragment int, edge Edge) {
 		if fragment != node.fragment {
 			node.onAccept(edge)
 		} else {
-			if edge.state == BasicState {
-				edge.state = RejectedState
+			if edge.State == BasicState {
+				edge.State = RejectedState
 				if node.testEdge.weight != edge.weight {
 					node.onReject(edge)
 				} else {
@@ -200,8 +200,8 @@ func (node *Node) onAccept(edge Edge){
 }
 
 func (node *Node) onReject(edge Edge){
-	if edge.state == BasicState {
-		edge.state = RejectedState
+	if edge.State == BasicState {
+		edge.State = RejectedState
 	}
 	// execute test
 }
@@ -240,7 +240,7 @@ func (node *Node) loop() {
 
 
 // followerSelect implements the logic to handle messages from distinct
-// events when in follower state.
+// events when in follower State.
 func (node *Node) handler() {
 	log.Println("Starting Handler")
 	for {
