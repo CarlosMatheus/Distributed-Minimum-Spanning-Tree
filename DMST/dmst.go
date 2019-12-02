@@ -48,12 +48,11 @@ type Node struct {
 	findCount int
 	inBranch int
 
-	bestEdge Edge
-	bestEdgeWeight Edge
+	bestEdge *Edge
+	bestEdgeWeight *Edge
 
-	testEdge Edge
-	edgeList [] Edge // todo initialize this variable on new Nodes
-
+	testEdge *Edge
+	edgeList [] *Edge // todo initialize this variable on new Nodes
 	edgeMap map[int]*Edge // todo initialize this variable on new Nodes
 
 	currentState *util.ProtectedString
@@ -237,20 +236,20 @@ func (node *Node) responseToInitiate(message *MessageArgs) {
 	node.
 }
 
-func (node *Node) onTest(level int, fragment int, edge Edge) {
+func (node *Node) responseToTest(msg *MessageArgs) {
 	if node.state == SleepingState {
 		node.wakeupProcedure()
 	}
-	if level > node.level {
-		// place msg to the queue
+	if msg.NodeLevel > node.level {
+		node.placeReceivedMessageOnEndOfQueue(msg)
 	} else {
-		if fragment != node.fragment {
-			node.onAccept(edge)
+		if msg.NodeFragment != node.fragment {
+			node.responseToAccept(edge)
 		} else {
-			if edge.state == BasicState {
-				edge.state = RejectedState
-				if node.testEdge.weight != edge.weight {
-					node.onReject(edge)
+			if node.edgeMap[msg.EdgeWeight].state == BasicState {
+				node.edgeMap[msg.EdgeWeight].state = RejectedState
+				if node.testEdge.weight != msg.EdgeWeight {
+					node.responseToReject(edge)
 				} else {
 					// execute test
 				}
@@ -259,15 +258,15 @@ func (node *Node) onTest(level int, fragment int, edge Edge) {
 	}
 }
 
-func (node *Node) onAccept(edge Edge){
-	//node.testEdge = nil
-	if edge.weight < node.bestEdge.weight {
+func (node *Node) responseToAccept(weight int){
+	node.testEdge = nil
+	if weight < node.bestEdge.weight {
 		node.bestEdge = edge
 	}
 	// execute report
 }
 
-func (node *Node) onReject(edge Edge){
+func (node *Node) responseToReject(edge Edge){
 	if edge.state == BasicState {
 		edge.state = RejectedState
 	}
