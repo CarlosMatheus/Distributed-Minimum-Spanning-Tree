@@ -98,7 +98,7 @@ func (node *Node) awakeningResponse() {
 	// Is a reponse to a awake call, this can only occur to sleeping node
 	if node.state == SleepingState {
 		// ok
-		wakeupProcedure(node)
+		node.wakeupProcedure()
 	} else {
 		// problem
 		debugPrint("Error: awakeningResponse called when node not in sleeping state")
@@ -134,8 +134,8 @@ func (node *Node) wakeupProcedure() {
 	node.connect(minEdge.targetNodeID)
 }
 
-func (node *Node) placeReceivedMessageOnEndOfQueue() {
-	// todo craete
+func (node *Node) placeReceivedMessageOnEndOfQueue(msg *MessageArgs) {
+	node.msgChan <- msg
 }
 
 func (node *Node) responseToConnect(newNodeLevel int, arrivingEdge int) {
