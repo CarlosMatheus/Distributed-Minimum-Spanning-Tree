@@ -82,6 +82,7 @@ func initializeEdgeMap(nIDs []string, nWTs []string) map[int]*Edge{
 		edgeMap[edge.weight] = edge
 	}
 
+	fmt.Print(edgeMap)
 	return edgeMap
 }
 
@@ -288,6 +289,7 @@ func (node *Node) responseToConnect(msg *MessageArgs) {
 			node.findCount++
 		}
 	} else {
+		fmt.Print(msg.EdgeWeight, node.edgeMap[msg.EdgeWeight], BasicState)
 		if node.edgeMap[msg.EdgeWeight].state == BasicState {
 			node.placeMessageEndOfQueue(msg)
 		} else {
