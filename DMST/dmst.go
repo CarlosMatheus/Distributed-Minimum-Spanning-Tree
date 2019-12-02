@@ -9,27 +9,14 @@ import (
 	"time"
 )
 
-const SLEEPING_STATE = "Sleeping"
-const FIND_STATE = "Find"
-const FOUND_STATE = "Found"
-const REJECTED_STATE = "Rejected"
-const BRANCH_STATE = "Branch"
-const BASIC_STATE = "Basic"
+const SleepingState = "Sleeping"
+const FindState = "Find"
+const FoundState = "Found"
+const RejectedState = "Rejected"
+const BranchState = "Branch"
+const BasicState = "Basic"
 
-//var nodeStatusList = map[string]int{
-//	"Sleeping": 1,
-//	"Find": 2,
-//	"Found": 3,
-//}
-//
-//var edgeStatusList = map[int]string{
-//	1: "Rejected",
-//	2: "Branch",
-//	3: "Basic",
-//}
-
-// Node is the struct that hold all information that is used by this instance
-// of node.
+// Node is the struct that hold all information that is used by this instance of node
 type Node struct {
 	sync.Mutex
 
@@ -46,12 +33,11 @@ type Node struct {
 	// GHS variables
 	nodeLevel int
 	nodeStatus string
-	nodeFragement int
+	nodeFragment int
 	findCount int
 	inBranch int
-	bestEdge int
-	bestWt int
-	testEdge int
+	bestEdge Edge
+	testEdge Edge
 
 	edgeList [] Edge // todo initialize this variable on new Nodes
 }
@@ -103,7 +89,7 @@ func debugPrint(s string){
 
 func (node *Node) awakeningResponse() {
 	// Is a reponse to a awake call, this can only occur to sleeping node
-	if node.nodeStatus == SLEEPING_STATE {
+	if node.nodeStatus == SleepingState {
 		// ok
 		wakeupProcedure(node)
 	} else {
@@ -135,6 +121,25 @@ func (node *Node) wakeupProcedure() {
 	node.nodeStatus = FOUND_STATE
 	node.findCount = 0
 	node.connect(minEdge.targetNodeID)
+}
+
+func (node *Node) onTest(int level) {
+
+}
+
+func (node *Node) onAccept(edge Edge){
+	node.testEdge = nil
+	if edge.weight < node.bestEdge.weight {
+		node.bestEdge = edge
+	}
+	// execute report
+}
+
+func (node *Node) onReject(edge Edge){
+	if edge.edgeStatus == BasicState {
+		edge.edgeStatus = RejectedState
+	}
+	// execute test
 }
 
 // All changes to Node structure should occur in the context of this routine.
