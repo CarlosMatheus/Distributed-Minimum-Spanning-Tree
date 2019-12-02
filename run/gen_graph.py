@@ -30,7 +30,10 @@ class Graph:
 
     def add_edge(self, edge):
         self.edge_list.append(edge)
-        self.edge_hash[edge.weight] = edge
+        if edge.weight not in self.edge_hash:
+            self.edge_hash[edge.weight] = [edge]
+        else:
+            self.edge_hash[edge.weight].append(edge)
 
     def add_node(self, id, state):
         node = Node(id, state, self)
@@ -64,11 +67,22 @@ class Node:
         self.id = id
         self.state = state
         self.neighbors_list = list()
+        self.neighbors_hash = dict()
         self.graph = graph
 
     def add_edge(self, edge):
         self.neighbors_list.append(edge)
+        self.neighbors_hash[edge.weight] = edge
         self.graph.add_edge(edge)
+
+    def get_edge_by_id(self, edge_id):
+        return self.neighbors_hash[edge_id]
+
+    def set_state(self, new_state):
+        if new_state not in state_to_color:
+            print('Error: state dont exist ' + new_state)
+        else:
+            self.state = new_state
 
 
 class Edge:
@@ -77,6 +91,12 @@ class Edge:
         self.to_node = to_node
         self.weight = weight
         self.state = state
+
+    def set_state(self, new_state):
+        if new_state not in state_to_color:
+            print('Error: state dont exist ' + new_state)
+        else:
+            self.state = new_state
 
 
 def make_graph():
@@ -118,7 +138,22 @@ def make_graph():
 
 
 def gen_graphs_variation_from_log(graph):
-    pass
+    file = open(path.join('logs', 'log.txt'), 'r')
+    row_list = file.read().split('\n')
+    for idx, row in enumerate(row_list):
+        begin, end = row.split(' >> ')
+        if begin.startswith('NODE'):
+            node_id, new_state = end.split(' ')
+            node = graph.get_node_by_id(node_id)
+            node.set_state(new_state)
+        elif begin.startswith('EDGE'):
+            node_id, edge_id, new_edge_state = end.split(' ')
+            node = graph.get_node_by_id(node_id)
+            edge = node.get_edge_by_id(edge_id)
+            edge.set_state(new_state)
+        else:
+            print('erro')
+        graph.print_graph("%03d" % (idx+1))
 
 
 graph = make_graph()
@@ -140,5 +175,5 @@ files.sort()
 images = []
 for filename in files:
     images.append(imageio.imread(filename))
-imageio.mimsave('movie.gif', images)
+imageio.mimsave('movie.gif', images, duration=0.5)
 
