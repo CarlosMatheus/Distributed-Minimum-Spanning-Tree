@@ -31,13 +31,13 @@ type Node struct {
 	receiveMsgChan chan *receiveMsgArgs
 
 	// GHS variables
-	nodeLevel int
-	nodeStatus string
-	nodeFragment int
+	level     int
+	state     string
+	fragment  int
 	findCount int
-	inBranch int
-	bestEdge Edge
-	testEdge Edge
+	inBranch  int
+	bestEdge  Edge
+	testEdge  Edge
 
 	edgeList [] Edge // todo initialize this variable on new Nodes
 }
@@ -89,7 +89,7 @@ func debugPrint(s string){
 
 func (node *Node) awakeningResponse() {
 	// Is a reponse to a awake call, this can only occur to sleeping node
-	if node.nodeStatus == SleepingState {
+	if node.state == SleepingState {
 		// ok
 		wakeupProcedure(node)
 	} else {
@@ -116,15 +116,33 @@ func (node *Node) connect(targetNodeID int) {
 
 func (node *Node) wakeupProcedure() {
 	minEdge := node.getMinEdge()
-	minEdge.edgeStatus = BRANCH_STATE
-	node.nodeLevel = 0
-	node.nodeStatus = FOUND_STATE
+	minEdge.edgeStatus = BranchState
+	node.level = 0
+	node.state = FoundState
 	node.findCount = 0
 	node.connect(minEdge.targetNodeID)
 }
 
-func (node *Node) onTest(int level) {
-
+func (node *Node) onTest(level int, fragment int, edge Edge) {
+	if node.state == SleepingState {
+		node.wakeupProcedure()
+	}
+	if level > node.level {
+		// place msg to the queue
+	} else {
+		if fragment != node.fragment {
+			node.onAccept(edge)
+		} else {
+			if edge.edgeStatus == BasicState {
+				edge.edgeStatus = RejectedState
+				if node.testEdge.weight != edge.weight {
+					node.onReject(edge)
+				} else {
+					// execute test
+				}
+			}
+		}
+	}
 }
 
 func (node *Node) onAccept(edge Edge){
