@@ -50,6 +50,7 @@ type Node struct {
 	bestEdge Edge
 	testEdge Edge
 	edgeList [] Edge // todo initialize this variable on new Nodes
+
 	edgeMap map[int]*Edge // todo initialize this variable on new Nodes
 
 	currentState *util.ProtectedString
@@ -228,7 +229,6 @@ func (node *Node) responseToInitiate(message *MessageArgs) {
 	node.fragment = message.NodeFragment
 	node.state = message.NodeStatus
 	node.inBranch = message.FromID
-
 }
 
 func (node *Node) onTest(level int, fragment int, edge Edge) {
