@@ -8,7 +8,7 @@ type MessageArgs struct {
 	FromID       	int
 	Type         	string
 	NodeLevel    	int
-	NodeStatus   	string
+	NodeState   	string
 	NodeFragment 	int
 	EdgeWeight   	int
 	BestEdgeWeight 	int
