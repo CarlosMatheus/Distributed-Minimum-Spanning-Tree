@@ -167,8 +167,8 @@ func (node *Node) awakeningResponse() {
 	}
 }
 
-func (node *Node) getMinEdge() Edge {
-	var minEdge Edge
+func (node *Node) getMinEdge() *Edge {
+	var minEdge *Edge
 	var minEdgeVal = Infinite
 	for _, edge := range node.edgeList {
 		if edge.weight < minEdgeVal {
@@ -195,8 +195,6 @@ func (node *Node) wakeupProcedure() {
 	node.findCount = 0
 	node.connect(minEdge.targetNodeID)
 }
-
-
 
 func (node *Node) placeMessageEndOfQueue(msg *MessageArgs) {
 	node.msgChan <- msg
@@ -227,8 +225,7 @@ func (node *Node) responseToInitiate(message *MessageArgs) {
 	node.state = message.NodeStatus
 	node.inBranch = message.FromID
 
-	node.bestEdge = Null
-	node.
+	node.bestEdge = nil
 }
 
 func (node *Node) responseToTest(msg *MessageArgs) {
@@ -236,7 +233,7 @@ func (node *Node) responseToTest(msg *MessageArgs) {
 		node.wakeupProcedure()
 	}
 	if msg.NodeLevel > node.level {
-		node.placeReceivedMessageOnEndOfQueue(msg)
+		node.placeMessageEndOfQueue(msg)
 	} else {
 		if msg.NodeFragment != node.fragment {
 			node.responseToAccept(msg.EdgeWeight)
@@ -274,7 +271,7 @@ func (node *Node) reportProcedure() {
 		args := &MessageArgs{
 			FromID: node.me,
 			Type: ReportType,
-			BestEdgeWeight: node.bestEdgeWeight
+			BestEdgeWeight: node.bestEdgeWeight,
 		} 
 		go func(peer int) {
 			reply := &MessageReply{}
@@ -285,21 +282,22 @@ func (node *Node) reportProcedure() {
 
 func (node *Node) responseToReport(msg *MessageArgs) {
 	if msg.FromID != node.inBranch {
-		node.findCount -= node.findCount - 1
-		if weight < node.bestEdgeWeight {
-			node.bestEdgeWeight = weight
+		node.findCount -= 1
+		if msg.BestEdgeWeight < node.bestEdgeWeight {
+			node.bestEdgeWeight = msg.BestEdgeWeight
 		}
 		node.reportProcedure()
-	}
-	else if node.state == FindState {
+	} else if node.state == FindState {
 		node.placeMessageEndOfQueue(msg)
-	}
-	else if weight > node.bestEdgeWeight {
+	} else if msg.BestEdgeWeight > node.bestEdgeWeight {
 		node.changeCoreProcedure()
-	}
-	else if weight == node.bestEdgeWeight == Infinite {
+	} else if msg.BestEdgeWeight == node.bestEdgeWeight && node.bestEdgeWeight == Infinite {
 		node.halt()
 	}
+}
+
+func (node *Node) changeCoreProcedure() {
+	// todo
 }
 
 func (node *Node) halt() {
