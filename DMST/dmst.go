@@ -1,7 +1,7 @@
 package DMST
 
 import (
-	_ "Distributed-Minimum-Spanning-Tree/util"
+	"Distributed-Minimum-Spanning-Tree/util"
 	"errors"
 	"fmt"
 	"log"
@@ -9,12 +9,24 @@ import (
 	"time"
 )
 
+// Node possible states
 const SleepingState = "Sleeping"
 const FindState = "Find"
 const FoundState = "Found"
+
+// Edge possible states
 const RejectedState = "Rejected"
 const BranchState = "Branch"
 const BasicState = "Basic"
+
+// Connection possible types
+const ConnectType = "Connect"
+const InitiateType = "Initiate"
+const TestType = "Test"
+const AcceptType = "Accept"
+const RejectType = "Reject"
+const ReportType = "Report"
+const ChangeCoreType = "Change-core"
 
 // Node is the struct that hold all information that is used by this instance of node
 type Node struct {
@@ -38,8 +50,6 @@ type Node struct {
 	bestEdge Edge
 	testEdge Edge
 	edgeList [] Edge // todo initialize this variable on new Nodes
-
-
 
 	currentState *util.ProtectedString
 	currentTerm  int
@@ -89,6 +99,62 @@ func (node *Node) Done() <-chan struct{} {
 	return node.done
 }
 
+func (node *Node) loop() {
+
+	err := node.serv.startListening()
+	if err != nil {
+		panic(err)
+	}
+
+	for {
+		if node.me == 2{
+			args := &MessageArgs{
+				Type: InitiateType,
+				NodeLevel: 1,
+				NodeStatus: 2,
+				NodeFragement: 3,
+				EdgeWeight: 4,
+			} 
+			// go func(peer int) {
+				reply := &MessageReply{}
+				node.sendMessage(1, args, reply)
+			// }(1)
+		}
+
+		if node.me == 1{
+			node.handler()
+		}
+	}
+}
+
+func (node *Node) handler() {
+	log.Println("Starting Handler")
+	for {
+		msg := <-node.msgChan
+		node.messageLog(*msg)
+		switch msg.Type{
+			case ConnectType:
+				return
+			case InitiateType:
+				return
+			case TestType:
+				return
+			case AcceptType:
+				return
+			case RejectType:
+				return
+			case ReportType:
+				return
+			case ChangeCoreType:
+				return
+		}
+	}
+}
+
+func (node *Node) messageLog(msg MessageArgs){
+	log.Printf("[NODE %d] %s message received from node %d", node.me, msg.Type, msg.FromID)
+}
+
 func debugPrint(s string){
 	fmt.Print(s)
 }
@@ -97,7 +163,7 @@ func (node *Node) awakeningResponse() {
 	// Is a reponse to a awake call, this can only occur to sleeping node
 	if node.nodeStatus == SleepingState {
 		// ok
-		wakeupProcedure(node)
+		node.wakeupProcedure()
 	} else {
 		// problem
 		debugPrint("Error: awakeningResponse called when node not in sleeping state")
@@ -122,19 +188,19 @@ func (node *Node) connect(targetNodeID int) {
 
 func (node *Node) wakeupProcedure() {
 	minEdge := node.getMinEdge()
-	minEdge.edgeStatus = BRANCH_STATE
+	minEdge.edgeStatus = BranchState
 	node.nodeLevel = 0
-	node.nodeStatus = FOUND_STATE
+	node.nodeStatus = FoundState
 	node.findCount = 0
 	node.connect(minEdge.targetNodeID)
 }
 
-func (node *Node) onTest(int level) {
+func (node *Node) onTest(level int) {
 
 }
 
 func (node *Node) onAccept(edge Edge){
-	node.testEdge = nil
+	//node.testEdge = nil
 	if edge.weight < node.bestEdge.weight {
 		node.bestEdge = edge
 	}
@@ -146,52 +212,4 @@ func (node *Node) onReject(edge Edge){
 		edge.edgeStatus = RejectedState
 	}
 	// execute test
-}
-
-// All changes to Node structure should occur in the context of this routine.
-// This way it's not necessary to use synchronizers to protect shared data.
-// To send data to each of the states, use the channels provided.
-func (node *Node) loop() {
-
-	err := node.serv.startListening()
-	if err != nil {
-		panic(err)
-	}
-
-	for {
-		if node.me == 2{
-			args := &MessageArgs{
-				Type: "Teste",
-				NodeLevel: 1,
-				NodeStatus: 2,
-				NodeFragement: 3,
-				EdgeWeight: 4,
-			} 
-			// go func(peer int) {
-				reply := &MessageReply{}
-				node.sendMessage(1, args, reply)
-			// }(1)
-		}
-
-		if node.me == 1{
-			node.handler()
-		}
-	}
-}
-
-
-
-// followerSelect implements the logic to handle messages from distinct
-// events when in follower state.
-func (node *Node) handler() {
-	log.Println("Starting Handler")
-	for {
-		msg := <-node.msgChan
-		switch msg.Type{
-		case "Teste":
-			log.Println("Message received")
-			log.Println(msg)
-			return
-		}
-	}
 }

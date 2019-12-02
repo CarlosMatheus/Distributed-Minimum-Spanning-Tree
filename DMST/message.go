@@ -5,6 +5,7 @@ package DMST
 // Term  	- leader’s term
 // leaderId - so follower can redirect clients
 type MessageArgs struct {
+	FromID int
 	Type string
 	NodeLevel int
 	NodeStatus int
