@@ -169,7 +169,7 @@ func (node *Node) awakeningResponse() {
 func (node *Node) getMinEdge() Edge {
 	var minEdge Edge
 	var minEdgeVal = Infinite
-	for _, edge := range node.edgeList {
+	for _, edge := range node.edgeMap {
 		if edge.weight < minEdgeVal {
 			minEdgeVal = edge.weight
 			minEdge = *edge
@@ -184,6 +184,10 @@ func (node *Node) connect(targetNodeID int) {
 
 func (node *Node) sendInitiate(message *MessageArgs, edgeID int) {
 	// todo create send initiate function
+}
+
+func (node *Node) sendTest(message *MessageArgs, edgeID int) {
+	// todo create send send test
 }
 
 func (node *Node) wakeupProcedure() {
@@ -240,8 +244,22 @@ func (node *Node) responseToInitiate(message *MessageArgs) {
 	}
 }
 
-func (node *Node) procedureTest() {
-	
+func (node *Node) procedureTest(msg *MessageArgs) {
+	minWeightedEdge := Infinite
+	for _, edge := range node.edgeMap {
+		if edge.state == BasicState {
+			if edge.weight < minWeightedEdge {
+				minWeightedEdge = edge.weight
+			}
+		}
+	}
+	if minWeightedEdge != Infinite {
+		node.testEdge = node.edgeMap[minWeightedEdge]
+		node.sendTest(msg, minWeightedEdge)
+	} else {
+		node.testEdge = nil
+		node.reportProcedure()
+	}
 }
 
 func (node *Node) responseToTest(msg *MessageArgs) {
