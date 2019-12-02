@@ -2,7 +2,6 @@ package main
 
 import (
 	"flag"
-
 	"fmt"
 	"strconv"
 	"strings"
@@ -24,13 +23,9 @@ func main() {
 
 	fmt.Print(peers)
 
-	// if _, ok := peers[*nodeID]; !ok {
-	// 	log.Fatalf("[MAIN] Invalid instance id.\n")
-	// }
+	node := node.NewNode(peers, *nodeID)
 
-	// node := node.NewNode(peers, *nodeID)
-
-	// <-node.Done()
+	<-node.Done()
 }
 
 func makePeers(ID int, nIDs []string) map[int]string{
