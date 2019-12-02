@@ -1,27 +1,22 @@
 package DMST
 
 import (
+	_ "Distributed-Minimum-Spanning-Tree/util"
 	"errors"
-	"Distributed-Minimum-Spanning-Tree/util"
+	"fmt"
 	"log"
 	"sync"
 	"time"
 )
 
-var nodeStatusList = map[int]string{
-	1: "Sleeping",
-	2: "Find",
-	3: "Found",
-}
+const SleepingState = "Sleeping"
+const FindState = "Find"
+const FoundState = "Found"
+const RejectedState = "Rejected"
+const BranchState = "Branch"
+const BasicState = "Basic"
 
-var edgeStatusList = map[int]string{
-	1: "Rejected",
-	2: "Branch",
-	3: "Basic",
-}
-
-// Node is the struct that hold all information that is used by this instance
-// of node.
+// Node is the struct that hold all information that is used by this instance of node
 type Node struct {
 	sync.Mutex
 
@@ -36,13 +31,13 @@ type Node struct {
 
 	// GHS variables
 	nodeLevel int
-	nodeStatus int
-	nodeFragement int
+	nodeStatus string
+	nodeFragment int
 	findCount int
 	inBranch int
-	bestEdge int
-	bestWt int
-	testEdge int
+	bestEdge Edge
+	testEdge Edge
+	edgeList [] Edge // todo initialize this variable on new Nodes
 
 
 
@@ -52,12 +47,12 @@ type Node struct {
 
 	// Goroutine communication channels
 	electionTick    <-chan time.Time
-
 }
 
 type Edge struct {
 	weight int
-	edgeStatus int
+	edgeStatus string  // SE
+	targetNodeID int
 }
 
 // NewNode create a new node object and return a pointer to it.
@@ -92,6 +87,65 @@ func NewNode(peers map[int]string, me int) *Node {
 // Done returns a channel that will be used when the instance is done.
 func (node *Node) Done() <-chan struct{} {
 	return node.done
+}
+
+func debugPrint(s string){
+	fmt.Print(s)
+}
+
+func (node *Node) awakeningResponse() {
+	// Is a reponse to a awake call, this can only occur to sleeping node
+	if node.nodeStatus == SleepingState {
+		// ok
+		wakeupProcedure(node)
+	} else {
+		// problem
+		debugPrint("Error: awakeningResponse called when node not in sleeping state")
+	}
+}
+
+func (node *Node) getMinEdge() Edge {
+	var minEdge Edge
+	var minEdgeVal = (1<<31) - 1
+	for _, edge := range node.edgeList {
+		if edge.weight < minEdgeVal {
+			minEdgeVal = edge.weight
+			minEdge = edge
+		}
+	}
+	return minEdge
+}
+
+func (node *Node) connect(targetNodeID int) {
+	// todo create connect function
+}
+
+func (node *Node) wakeupProcedure() {
+	minEdge := node.getMinEdge()
+	minEdge.edgeStatus = BRANCH_STATE
+	node.nodeLevel = 0
+	node.nodeStatus = FOUND_STATE
+	node.findCount = 0
+	node.connect(minEdge.targetNodeID)
+}
+
+func (node *Node) onTest(int level) {
+
+}
+
+func (node *Node) onAccept(edge Edge){
+	node.testEdge = nil
+	if edge.weight < node.bestEdge.weight {
+		node.bestEdge = edge
+	}
+	// execute report
+}
+
+func (node *Node) onReject(edge Edge){
+	if edge.edgeStatus == BasicState {
+		edge.edgeStatus = RejectedState
+	}
+	// execute test
 }
 
 // All changes to Node structure should occur in the context of this routine.

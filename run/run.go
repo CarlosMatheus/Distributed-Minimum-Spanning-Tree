@@ -2,37 +2,24 @@ package main
 
 import (
 	"flag"
-	"hash/fnv"
 	"Distributed-Minimum-Spanning-Tree/DMST"
 	// "log"
-	"math/rand"
-	"time"
-	"strings"
 	"fmt"
 	"strconv"
+	"strings"
 )
 
 // Command line parameters
 var (
 	ID = flag.Int("id", 0, "ID of the node")
 	neighborIDs = flag.String("nid", "0", "IDs of the neighbors")
-	seed       = flag.String("seed", "", "Seed for RNG")
 	//RNG = Random Number Generator
 )
 
 func main() {
 	flag.Parse()
 
-	if *seed != "" {
-		h := fnv.New32a()
-		h.Write([]byte(*seed))
-		rand.Seed(int64(h.Sum32()))
-	} else {
-		rand.Seed(time.Now().UnixNano())
-	}
-
 	nIDs := strings.Split(*neighborIDs, ",")
-
 
 	peers := makePeers(*ID, nIDs)
 
