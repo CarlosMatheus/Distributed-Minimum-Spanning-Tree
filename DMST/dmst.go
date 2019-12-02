@@ -47,7 +47,10 @@ type Node struct {
 	fragment int   // FN
 	findCount int
 	inBranch int
+
 	bestEdge Edge
+	bestEdgeWeight Edge
+
 	testEdge Edge
 	edgeList [] Edge // todo initialize this variable on new Nodes
 
@@ -229,6 +232,9 @@ func (node *Node) responseToInitiate(message *MessageArgs) {
 	node.fragment = message.NodeFragment
 	node.state = message.NodeStatus
 	node.inBranch = message.FromID
+
+	node.bestEdge = Null
+	node.
 }
 
 func (node *Node) onTest(level int, fragment int, edge Edge) {
